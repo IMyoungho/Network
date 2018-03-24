@@ -32,11 +32,18 @@ void parsing_in_packet(parse *ps, cal_checksum *cc)
                 struct ether_header *ep = (struct ether_header *)packet;
                 if(ep->ether_type==ntohs(0x0800))
                 {
-                    packet+=sizeof(struct ether_header);
-                    struct iphdr *ip = (struct iphdr *)packet;
+                    struct iphdr *ip = (struct iphdr *)(packet+sizeof(struct ether_header));
                     cc->get_iphdr(ip);
                     uint16_t checksum=cc->checksum(ipchecksum);
-                    cout << hex << "ipchecksum = " << checksum <<endl;
+                    cout << hex << "ip checksum = 0x" << checksum << endl;
+                    if(ip->protocol==0x11)
+                    {
+                        struct udphdr *up = (struct udphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
+                        cc->get_udphdr(up);
+                        cc->get_udp_pesudo();
+                        uint16_t checksum=cc->checksum(udpchecksum);
+                        cout << hex << "udp checksum = 0x" << checksum << endl;
+                    }
                 }
             }
             break;

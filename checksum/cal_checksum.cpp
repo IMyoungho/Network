@@ -17,6 +17,13 @@ void cal_checksum::get_tcphdr(struct tcphdr *tp){
     tp->check=0;
     this->tcph=tp;
 }
+void cal_checksum::get_udp_pesudo(){ //error
+    this->pseu->src_ip = this->iph->saddr;
+    this->pseu->dst_ip = this->iph->daddr;
+    this->pseu->reserved = 0;
+    this->pseu->protocol = this->iph->protocol;
+    this->pseu->length = this->udph->len;
+}
 int cal_checksum::calculation(uint8_t *temp, int length, bool change){
     int checksum{0};
 
@@ -47,15 +54,26 @@ uint16_t cal_checksum::checksum(int select_checksum){
         case ipchecksum:
         {
             length = this->iph->ihl*4;
-            temp=new uint8_t[length];
+            temp = new uint8_t[length];
             memcpy(temp,(uint8_t*)this->iph,length);
             checksum = calculation(temp,length,false);
-            delete []temp;
         }
         break;
         case udpchecksum:
         {
+            length = ntohs(this->udph->len) + sizeof(struct pesudo);
+            temp = new uint8_t[length];
+            memcpy(temp,(uint8_t*)this->pseu,sizeof(struct pesudo));
+            memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->udph,ntohs(this->udph->len));
 
+            for(int i=0;i<length; i++)
+            {
+                if(i%16==0)
+                    cout << endl;
+                printf("%02x ",temp[i]);
+            }
+
+            checksum = calculation(temp,length,true);
         }
         break;
         case tcpchecksum:
@@ -66,5 +84,6 @@ uint16_t cal_checksum::checksum(int select_checksum){
         default:
             break;
     }
+    delete []temp;
     return checksum;
 }
