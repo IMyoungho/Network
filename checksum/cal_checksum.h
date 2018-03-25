@@ -20,7 +20,8 @@ class cal_checksum{
   struct iphdr  *iph;
   struct udphdr *udph;
   struct tcphdr *tcph;
-  struct pesudo pseu;
+  struct pesudo udp_pseu;
+  struct pesudo tcp_pseu;
 public:
   cal_checksum();
   void get_iphdr(struct iphdr *ip);

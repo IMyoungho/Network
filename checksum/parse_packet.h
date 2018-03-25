@@ -44,6 +44,14 @@ void parsing_in_packet(parse *ps, cal_checksum *cc)
                         uint16_t checksum=cc->checksum(udpchecksum);
                         cout << hex << "udp checksum = 0x" << checksum << endl;
                     }
+                    else if(ip->protocol==0x06)
+                    {
+                        struct tcphdr *tp = (struct tcphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
+                        cc->get_tcphdr(tp);
+                        cc->get_tcp_pesudo();
+                        uint16_t checksum=cc->checksum(tcpchecksum);
+                        cout << hex << "tcp checksum = 0x" << checksum << endl;
+                    }
                 }
             }
             break;
