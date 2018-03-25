@@ -36,9 +36,6 @@ void cal_checksum::get_pesudo(int type){
         case tcpchecksum:
             this->pseu.length = htons(ntohs(this->iph->tot_len)-this->iph->ihl*4);
         break;
-        case icmpchecksum:
-            this->pseu.length = htons(ntohs(this->iph->tot_len)-this->iph->ihl*4);
-        break;
         default:
             break;
     }
@@ -99,17 +96,9 @@ uint16_t cal_checksum::checksum(int select_checksum){
         break;
         case icmpchecksum:
         {
-            length = ntohs(this->iph->tot_len) + sizeof(struct pesudo) - this->iph->ihl*4 ;
+            length = ntohs(this->iph->tot_len) - this->iph->ihl*4 ;
             temp = new uint8_t[length];
-            memcpy(temp,(uint8_t*)&this->pseu,sizeof(struct pesudo));
-            memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->icph, ntohs(this->iph->tot_len)-this->iph->ihl*4);
-            for(int i=0; i<length; i++)
-            {
-                if(i%16==0)
-                    cout<<endl;
-                printf("%02x ",temp[i]);
-            }
-            cout << endl;
+            memcpy(temp,(uint8_t*)this->icph, ntohs(this->iph->tot_len)-this->iph->ihl*4);
             checksum = calculation(temp,length,true);
         }
         break;
