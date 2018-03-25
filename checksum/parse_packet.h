@@ -52,7 +52,7 @@ void parsing_in_packet(parse *ps, cal_checksum *cc)
                         uint16_t checksum=cc->checksum(tcpchecksum);
                         cout << hex << "tcp checksum = 0x" << checksum << endl;
                     }
-                    else if(ip->protocol==0x01) //udptest2를 쏘면 왜 protocol 1일때가 발생하지?
+                    else if(ip->protocol==0x01)
                     {
                         struct icmphdr *icp = (struct icmphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
                         cc->get_icmphdr(icp);

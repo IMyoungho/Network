@@ -40,7 +40,6 @@ void cal_checksum::get_pesudo(int type){
             break;
     }
 }
-
 int cal_checksum::calculation(uint8_t *temp, int length, bool change){
     int checksum{0};
 
