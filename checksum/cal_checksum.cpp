@@ -17,19 +17,19 @@ void cal_checksum::get_tcphdr(struct tcphdr *tp){
     tp->check=0;
     this->tcph=tp;
 }
-void cal_checksum::get_udp_pesudo(){ //error
+void cal_checksum::get_udp_pesudo(){
     this->udp_pseu.src_ip = this->iph->saddr;
     this->udp_pseu.dst_ip = this->iph->daddr;
     this->udp_pseu.reserved = 0;
     this->udp_pseu.protocol = this->iph->protocol;
     this->udp_pseu.length = this->udph->len;
 }
-void cal_checksum::get_tcp_pesudo(){ //error
+void cal_checksum::get_tcp_pesudo(){
     this->tcp_pseu.src_ip = this->iph->saddr;
     this->tcp_pseu.dst_ip = this->iph->daddr;
     this->tcp_pseu.reserved = 0;
     this->tcp_pseu.protocol = this->iph->protocol;
-    this->tcp_pseu.length = ntohs(this->iph->tot_len)-this->iph->ihl*4;
+    this->tcp_pseu.length = htons(ntohs(this->iph->tot_len)-this->iph->ihl*4);
 }
 int cal_checksum::calculation(uint8_t *temp, int length, bool change){
     int checksum{0};
