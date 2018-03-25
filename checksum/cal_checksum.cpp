@@ -3,6 +3,8 @@
 #define ipchecksum 0
 #define udpchecksum 1
 #define tcpchecksum 2
+#define icmpchecksum 3
+#define OUT_OF_RANGE 65536
 
 cal_checksum::cal_checksum(){ }
 void cal_checksum::get_iphdr(struct iphdr *ip){
@@ -17,20 +19,31 @@ void cal_checksum::get_tcphdr(struct tcphdr *tp){
     tp->check=0;
     this->tcph=tp;
 }
-void cal_checksum::get_udp_pesudo(){
-    this->udp_pseu.src_ip = this->iph->saddr;
-    this->udp_pseu.dst_ip = this->iph->daddr;
-    this->udp_pseu.reserved = 0;
-    this->udp_pseu.protocol = this->iph->protocol;
-    this->udp_pseu.length = this->udph->len;
+void cal_checksum::get_icmphdr(struct icmphdr *icp){
+    icp->check=0;
+    this->icph=icp;
 }
-void cal_checksum::get_tcp_pesudo(){
-    this->tcp_pseu.src_ip = this->iph->saddr;
-    this->tcp_pseu.dst_ip = this->iph->daddr;
-    this->tcp_pseu.reserved = 0;
-    this->tcp_pseu.protocol = this->iph->protocol;
-    this->tcp_pseu.length = htons(ntohs(this->iph->tot_len)-this->iph->ihl*4);
+void cal_checksum::get_pesudo(int type){
+    this->pseu.src_ip = this->iph->saddr;
+    this->pseu.dst_ip = this->iph->daddr;
+    this->pseu.reserved = 0;
+    this->pseu.protocol = this->iph->protocol;
+
+    switch (type) {
+        case udpchecksum:
+            this->pseu.length = this->udph->len;
+        break;
+        case tcpchecksum:
+            this->pseu.length = htons(ntohs(this->iph->tot_len)-this->iph->ihl*4);
+        break;
+        case icmpchecksum:
+            this->pseu.length = htons(ntohs(this->iph->tot_len)-this->iph->ihl*4);
+        break;
+        default:
+            break;
+    }
 }
+
 int cal_checksum::calculation(uint8_t *temp, int length, bool change){
     int checksum{0};
 
@@ -44,13 +57,13 @@ int cal_checksum::calculation(uint8_t *temp, int length, bool change){
         }
         checksum += (temp[i] << 8) + temp[i+1];
     }
-    int carry{0};
-    while(checksum>=65536)
+    int carry_count{0};
+    while(checksum>=OUT_OF_RANGE)
     {
-        checksum-=65536;
-        carry++;
+        checksum-=OUT_OF_RANGE;
+        carry_count++;
     }
-    checksum+=carry;
+    checksum+=carry_count;
     return ~checksum;
 }
 uint16_t cal_checksum::checksum(int select_checksum){
@@ -70,17 +83,33 @@ uint16_t cal_checksum::checksum(int select_checksum){
         {
             length = ntohs(this->udph->len) + sizeof(struct pesudo);
             temp = new uint8_t[length];
-            memcpy(temp,(uint8_t*)&this->udp_pseu,sizeof(struct pesudo));
-            memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->udph,ntohs(this->udph->len));
+            memcpy(temp,(uint8_t*)&this->pseu,sizeof(struct pesudo));
+            memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->udph, ntohs(this->udph->len));
             checksum = calculation(temp,length,true);
         }
         break;
         case tcpchecksum:
         {
-            length = ntohs(this->iph->tot_len) + sizeof(struct pesudo) -this->iph->ihl*4 ;
+            length = ntohs(this->iph->tot_len) + sizeof(struct pesudo) - this->iph->ihl*4 ;
             temp = new uint8_t[length];
-            memcpy(temp,(uint8_t*)&this->tcp_pseu,sizeof(struct pesudo));
-            memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->tcph,ntohs(this->iph->tot_len)-this->iph->ihl*4);
+            memcpy(temp,(uint8_t*)&this->pseu,sizeof(struct pesudo));
+            memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->tcph, ntohs(this->iph->tot_len)-this->iph->ihl*4);
+            checksum = calculation(temp,length,true);
+        }
+        break;
+        case icmpchecksum:
+        {
+            length = ntohs(this->iph->tot_len) + sizeof(struct pesudo) - this->iph->ihl*4 ;
+            temp = new uint8_t[length];
+            memcpy(temp,(uint8_t*)&this->pseu,sizeof(struct pesudo));
+            memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->icph, ntohs(this->iph->tot_len)-this->iph->ihl*4);
+            for(int i=0; i<length; i++)
+            {
+                if(i%16==0)
+                    cout<<endl;
+                printf("%02x ",temp[i]);
+            }
+            cout << endl;
             checksum = calculation(temp,length,true);
         }
         break;

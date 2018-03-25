@@ -13,7 +13,7 @@
 #define ipchecksum 0
 #define udpchecksum 1
 #define tcpchecksum 2
-
+#define icmpchecksum 3
 void parsing_in_packet(parse *ps, cal_checksum *cc)
 {
     pcap_t *pcd;
@@ -40,7 +40,7 @@ void parsing_in_packet(parse *ps, cal_checksum *cc)
                     {
                         struct udphdr *up = (struct udphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
                         cc->get_udphdr(up);
-                        cc->get_udp_pesudo();
+                        cc->get_pesudo(udpchecksum);
                         uint16_t checksum=cc->checksum(udpchecksum);
                         cout << hex << "udp checksum = 0x" << checksum << endl;
                     }
@@ -48,9 +48,17 @@ void parsing_in_packet(parse *ps, cal_checksum *cc)
                     {
                         struct tcphdr *tp = (struct tcphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
                         cc->get_tcphdr(tp);
-                        cc->get_tcp_pesudo();
+                        cc->get_pesudo(tcpchecksum);
                         uint16_t checksum=cc->checksum(tcpchecksum);
                         cout << hex << "tcp checksum = 0x" << checksum << endl;
+                    }
+                    else if(ip->protocol==0x01)
+                    {
+                        struct icmphdr *icp = (struct icmphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
+                        cc->get_icmphdr(icp);
+                        cc->get_pesudo(icmpchecksum);
+                        uint16_t checksum=cc->checksum(icmpchecksum);
+                        cout << hex << "icmp checksum = 0x" << checksum << endl;
                     }
                 }
             }
