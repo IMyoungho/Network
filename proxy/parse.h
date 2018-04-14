@@ -19,7 +19,7 @@
 #define icmpchecksum 3
 
 using namespace std;
-
+class cal_checksum;
 class parse {
 private:
     char *interface;

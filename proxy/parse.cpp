@@ -83,3 +83,4 @@ void parse::parsing_in_packet(cal_checksum *cc)
         }
     }
 }
+

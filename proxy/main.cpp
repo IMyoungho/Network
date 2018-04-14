@@ -132,18 +132,18 @@ static u_int32_t modify_packet(struct nfq_data *tb, parse *ps)
         cout << " >> No payload packet !! " << endl;
         return id;
     }
-    for (int i = 0; i < 48; i++) {
-        if (i % 16 == 0)
-            printf("\n");
-        printf("%02x ", data[i]);
-    }
+
     //cal_checksum cc;
     printf("payload_len=%d ", ret);
     struct iphdr *ipd = (struct iphdr *)data;
-    struct tcphdr *tpd = (struct tcphdr *)(data+ipd->ihl*4);
-    data += ipd->ihl*4 + tpd->doff*4;
-    string strdata((char*)(data + ipd->ihl*4 + tpd->doff*4));
-    cout << strdata << endl;
+    if(ntohs(ipd->protocol==0x06))
+    {
+        struct tcphdr *tpd = (struct tcphdr *)(data+ipd->ihl*4);
+        data += ipd->ihl*4 + tpd->doff*4;
+        string strdata((char*)(data + ipd->ihl*4 + tpd->doff*4));
+        cout << strdata << endl;
+    }
+
     return id;
 }
 
