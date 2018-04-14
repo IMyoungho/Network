@@ -15,72 +15,60 @@ void parse::check_argc(int argc){
 char* parse::using_interface(){
     return this->interface;
 }
-void parse::parsing_in_packet(cal_checksum *cc)
+void parse::get_my_mac(uint8_t mac[6]){
+    memcpy(this->my_mac,mac,6);
+}
+void parse::get_my_ip(char ip[16]){
+    inet_pton(AF_INET, ip, &this->my_ip);
+}
+uint8_t *parse::using_my_mac(){
+    return this->my_mac;
+}
+uint32_t parse::using_my_ip(){
+    return this->my_ip;
+}
+void parse::parse_data_in_linux()
 {
-    pcap_t *pcd;
-    const u_char *packet;
-    struct pcap_pkthdr *pkthdr;
-    int res;
-    char errbuf[PCAP_ERRBUF_SIZE];
-    pcd=pcap_open_live(this->using_interface(), BUFSIZ, 1, 1, errbuf);
-    while(true)
+    //-----------------------------get my(attacker) mac!!-----------------------------
+    char host_mac[18];//mymac
+    FILE *m;
+    string str_ifconfig = "ifconfig ";
+    string interface = this->using_interface();
+    string regex = " | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'";
+    str_ifconfig=str_ifconfig+interface+regex;
+
+    const char *command=str_ifconfig.c_str();
+    m=popen(command,"r");
+    fgets((char*)host_mac,18, m);
+    uint8_t mac[6];
+    char_to_binary(host_mac,mac);
+    this->get_my_mac(mac);
+
+    //-----------------------------get my(attacker) ip!!-----------------------------
+    FILE *i;
+    i=popen("ip addr | grep 'inet' | grep brd | awk '{printf $2}' | awk -F/ ' {printf $1}'","r");
+    char host_ip[15];
+    fgets(host_ip,15,i);
+    this->get_my_ip(host_ip);
+}
+void parse::get_send_packet_length(int length){
+    this->send_packet_length=length;
+    this->send_packet = new uint8_t [length];
+}
+int parse::using_send_packet_length(){
+    return this->send_packet_length;
+}
+void parse::make_send_packet(struct iphdr *ipd,uint8_t *data){
+    memcpy(this->send_packet,ipd,ipd->ihl*4);
+    memcpy(this->send_packet+ipd->ihl*4,data,this->send_packet_length-ipd->ihl*4);
+    for(int i=0; i<this->send_packet_length; i++)
     {
-        res=pcap_next_ex(pcd, &pkthdr, &packet);
-        switch (res)
-        {
-            case 1:
-            {
-                struct ether_header *ep = (struct ether_header *)packet;
-                if(ep->ether_type==ntohs(0x0800))
-                {
-                    struct iphdr *ip = (struct iphdr *)(packet+sizeof(struct ether_header));
-                    cc->get_iphdr(ip);
-                    uint16_t checksum=cc->checksum(ipchecksum);
-                    cout << hex << "ip checksum = 0x" << checksum << endl;
-                    if(ip->protocol==0x11)
-                    {
-                        struct udphdr *up = (struct udphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
-                        cc->get_udphdr(up);
-                        cc->get_pesudo(udpchecksum);
-                        uint16_t checksum=cc->checksum(udpchecksum);
-                        cout << hex << "udp checksum = 0x" << checksum << endl;
-                    }
-                    else if(ip->protocol==0x06)
-                    {
-                        struct tcphdr *tp = (struct tcphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
-                        cc->get_tcphdr(tp);
-                        cc->get_pesudo(tcpchecksum);
-                        uint16_t checksum=cc->checksum(tcpchecksum);
-                        cout << hex << "tcp checksum = 0x" << checksum << endl;
-                    }
-                    else if(ip->protocol==0x01)
-                    {
-                        struct icmphdr *icp = (struct icmphdr*)(packet+sizeof(struct ether_header)+ip->ihl*4);
-                        cc->get_icmphdr(icp);
-                        uint16_t checksum=cc->checksum(icmpchecksum);
-                        cout << hex << "icmp checksum = 0x" << checksum << endl;
-                    }
-                }
-            }
-            break;
-            case 0:
-                continue;
-            case -1:
-            {
-                printf(">> Error!!\n");
-                pcap_close(pcd);
-                sleep(1);
-                pcd = pcap_open_live(this->using_interface(), BUFSIZ, 1 , 1, errbuf);
-            }
-            break;
-            case -2:
-            {
-                printf("EOF");
-            }
-            break;
-            default:
-                break;
-        }
+        if(i%16==0)
+            cout << endl;
+        printf("%02x ",this->send_packet[i]);
     }
 }
-
+uint8_t *parse::using_send_packet()
+{
+    return this->send_packet;
+}

@@ -17,8 +17,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp \
     parse.cpp \
-    cal_checksum.cpp
+    cal_checksum.cpp \
+    convert_type.cpp
 
 HEADERS += \
     parse.h \
-    cal_checksum.h
+    cal_checksum.h \
+    convert_type.h

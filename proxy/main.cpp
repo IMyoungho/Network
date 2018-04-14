@@ -10,6 +10,12 @@
 #include "parse.h"
 #include "cal_checksum.h"
 
+#define ipchecksum 0
+#define udpchecksum 1
+#define tcpchecksum 2
+#define icmpchecksum 3
+#define OUT_OF_RANGE 65536
+
 /* returns packet id */
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa, void *data);
 static u_int32_t modify_packet (struct nfq_data *tb, parse *ps);
@@ -17,6 +23,8 @@ static u_int32_t modify_packet (struct nfq_data *tb, parse *ps);
 int main(int argc, char *argv[])
 {
     parse ps(argc,argv);
+    ps.parse_data_in_linux();
+
     struct nfq_handle *h;
     struct nfq_q_handle *qh;
     struct nfnl_handle *nh;
@@ -99,7 +107,7 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *
     parse *ps=(parse *)data;
     u_int32_t id = modify_packet(nfa,ps);
     printf("entering callback\n");
-    return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
+    return nfq_set_verdict(qh, id, NF_ACCEPT, ps->using_send_packet_length(), ps->using_send_packet());
 }
 
 static u_int32_t modify_packet(struct nfq_data *tb, parse *ps)
@@ -119,7 +127,6 @@ static u_int32_t modify_packet(struct nfq_data *tb, parse *ps)
     hwph = nfq_get_packet_hw(tb);
     if (hwph) {
         int i, hlen = ntohs(hwph->hw_addrlen);
-
         //printf("hw_src_addr=");
         //for (i = 0; i < hlen-1; i++)
             //printf("%02x:", hwph->hw_addr[i]);
@@ -132,18 +139,17 @@ static u_int32_t modify_packet(struct nfq_data *tb, parse *ps)
         cout << " >> No payload packet !! " << endl;
         return id;
     }
-
-    //cal_checksum cc;
     printf("payload_len=%d ", ret);
+    cal_checksum cc;
     struct iphdr *ipd = (struct iphdr *)data;
     if(ntohs(ipd->protocol==0x06))
     {
-        struct tcphdr *tpd = (struct tcphdr *)(data+ipd->ihl*4);
-        data += ipd->ihl*4 + tpd->doff*4;
-        string strdata((char*)(data + ipd->ihl*4 + tpd->doff*4));
-        cout << strdata << endl;
+        ipd->saddr=ps->using_my_ip();
+        cc.get_iphdr(ipd);
+        ipd->check=ntohs(cc.checksum(ipchecksum));
+        ps->get_send_packet_length(ret);
+        ps->make_send_packet(ipd,data+ipd->ihl*4);
     }
-
     return id;
 }
 
