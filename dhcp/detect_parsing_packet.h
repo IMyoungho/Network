@@ -11,7 +11,7 @@
 
 #define MTU 1500
 
-void detect_parsing_packet(parse *ps)
+bool detect_parsing_packet(parse *ps)//void -> bool
 {
     pcap_t *pcd;
     const u_char *packet;
@@ -24,7 +24,7 @@ void detect_parsing_packet(parse *ps)
     {
         res=pcap_next_ex(pcd, &pkthdr, &packet);
         if(pkthdr->len<=0 || (check==1 && check2==1))
-            break;
+            return true;// break -> return true
         switch (res)
         {
             case 1:
@@ -46,15 +46,17 @@ void detect_parsing_packet(parse *ps)
                     uint8_t option=*bspoint_packet;
                     uint8_t *temp_pointer;
 
-                    if(bs->message_type==0x01)
+                    if(bs->message_type==0x01) //discover
                     {
                         ps->parse_client_mac(ep->ether_shost);
                         ps->parse_transaction_id(bs->transaction_id);
                         check=1;
                         cout << ">> Client mac is parsed" << endl;
                     }
-                    else if(bs->message_type==0x02)
+                    else if(bs->message_type==0x02) //offer
                     {
+                        memcpy(ps->origin_dhcp_mac,ep->ether_shost,6);
+                        ps->origin_dhcp_ip=ip->saddr;
                         while(option!=DHCP_OPTION_END)
                         {
                             uint8_t length{0};
