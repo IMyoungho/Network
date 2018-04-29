@@ -7,12 +7,13 @@ LIBS += -lpthread
 SOURCES += main.cpp \
     parse.cpp \
     convert_char_to_binary.cpp \
-    send_packet.cpp
+    send_packet.cpp \
+    cal_checksum.cpp
 
 HEADERS += \
     parse.h \
     dhcp_header.h \
     detect_parsing_packet.h \
-    checksum.h \
     convert_char_to_binary.h \
-    send_packet.h
+    send_packet.h \
+    cal_checksum.h

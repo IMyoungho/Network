@@ -51,6 +51,7 @@ private:
 public:
     int pre_packet_length;
     uint8_t broadcast[6];
+    uint8_t allpacket[6];
     uint8_t origin_dhcp_mac[6];
     uint32_t origin_dhcp_ip;
     parse(int argc, char *argv[]);
@@ -60,6 +61,7 @@ public:
     void parse_data_in_linux();
     char* using_interface();
     uint8_t *using_broadcast();
+    uint8_t *using_allpacket();
     uint8_t *using_attacker_dhcp_server_mac();
     uint32_t *using_attacker_dhcp_server_ip();
     uint8_t *using_normal_dhcp_mac();

