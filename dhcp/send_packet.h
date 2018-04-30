@@ -3,8 +3,13 @@
 #include <iostream>
 #include <pcap.h>
 #include <unistd.h>
+#include <netinet/ether.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <thread>
+#include <pthread.h>
 #include "parse.h"
-
+#include <atomic>
 using namespace std;
 
 void send_arp(parse *ps);

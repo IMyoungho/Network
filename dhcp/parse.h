@@ -88,6 +88,7 @@ public:
     uint16_t *using_transaction_id();
     uint8_t *using_arp_packet();
     int using_arp_packet_length();
+    uint16_t read_request=ntohs(0x0001);
 };
 
 #endif // PARSE_H

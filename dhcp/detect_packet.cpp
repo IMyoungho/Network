@@ -1,20 +1,4 @@
-#ifndef DETECT_PARSING_PACKET_H
-#define DETECT_PARSING_PACKET_H
-#include <pcap.h>
-#include <netinet/ether.h>
-#include <netinet/ip.h>
-#include <netinet/udp.h>
-#include <unistd.h>
-#include "cal_checksum.h"
-#include "dhcp_header.h"
-#include "parse.h"
-
-#define ipchecksum 0
-#define udpchecksum 1
-#define tcpchecksum 2
-#define icmpchecksum 3
-#define OUT_OF_RANGE 65536
-#define MTU 1500
+#include "detect_packet.h"
 
 bool detect_parsing_packet(parse *ps)//void -> bool
 {
@@ -57,9 +41,13 @@ bool detect_parsing_packet(parse *ps)//void -> bool
                         ps->parse_transaction_id(bs->transaction_id);
                         check=1;
                         cout << ">> Client mac is parsed" << endl;
+
                     }
                     else if(bs->message_type==0x02) //offer
                     {
+                        if(ip->saddr!=*ps->using_attacker_dhcp_server_ip() ||
+                                memcmp(ep->ether_shost,ps->using_attacker_dhcp_server_mac(),6)!=0)//add
+                            break;
                         memcpy(ps->origin_dhcp_mac,ep->ether_shost,6);
                         ps->origin_dhcp_ip=ip->saddr;
                         while(option!=DHCP_OPTION_END)
@@ -159,13 +147,56 @@ bool detect_parsing_packet(parse *ps)//void -> bool
             }
             break;
             case -2:
-            {
                 printf("EOF");
-            }
             break;
             default:
             break;
         }
     }
 }
-#endif // DETECT_PARSING_PACKET_H
+void detect_tftp_packet(parse *ps, atomic<bool> &run)
+{
+    char errbuf[PCAP_ERRBUF_SIZE];
+    const u_char *packet;
+    struct pcap_pkthdr *pkthdr;
+    int res;
+    pcap_t *pcd;
+    pcd=pcap_open_live(ps->using_interface(), BUFSIZ, 1, 1, errbuf);
+    while(run)
+    {
+        res=pcap_next_ex(pcd, &pkthdr, &packet);
+        switch (res)
+        {
+            case 1:
+            {
+                packet+=sizeof(ether_header);
+                struct iphdr *iph = (struct iphdr*)packet;
+                packet+=iph->ihl*4;
+                if(iph->protocol!=0x11)
+                    break;
+                packet+=sizeof(udphdr);
+                if(memcmp(packet,&ps->read_request,2)==0)
+                {
+                    cout << "TFTP Detect !!"<<endl;
+                    run=false;
+                }
+            }
+            break;
+            case 0:
+                continue;
+            case -1:
+            {
+                printf(">> Error!!\n");
+                pcap_close(pcd);
+                sleep(1);
+                pcd = pcap_open_live(ps->using_interface(), BUFSIZ, 1 , 1, errbuf);
+            }
+            break;
+            case -2:
+                printf("EOF");
+            break;
+            default:
+            break;
+        }
+    }
+}

@@ -8,7 +8,7 @@
 #include <thread>
 #include <pthread.h>
 #include "parse.h"
-#include "detect_parsing_packet.h"
+#include "detect_packet.h"
 #include "send_packet.h"
 
 using namespace std;
@@ -20,10 +20,10 @@ int main(int argc, char *argv[])
     bool check = detect_parsing_packet(&ps);
     if(check!=true)
         return 0;
-    thread arp(send_arp, &ps);
+    //thread arp(send_arp, &ps);
     send_dhcp_offer(&ps);
-    if(arp.joinable()==true)
-        arp.join();
+    //if(arp.joinable()==true)
+    //    arp.join();
     cout << "finish" << endl;
     return 0;
 }
