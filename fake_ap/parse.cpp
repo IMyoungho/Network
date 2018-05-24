@@ -40,8 +40,24 @@ uint8_t *parse::check_tag(uint8_t *data, int &datalen, uint8_t &taglen){
     }
     return data;
 }
-void parse::scanning(map<keydata, valuedata>&map_beacon){
-    cout << " >> AP LIST\n";
+void parse::show_ap(map<keydata,valuedata>&map_beacon){
+    map<keydata,valuedata>::iterator bea_it;
+    char mac[18]{0};
+    int sequence = 1;
+    cout << "\t\t\t  * AP LIST *\n";
+    for(bea_it = map_beacon.begin(); bea_it!=map_beacon.end(); advance(bea_it,1)){
+         bea_it->second.sequence=sequence;
+         printf("       %2d  ",bea_it->second.sequence);
+         convert_type(mac,(uint8_t*)bea_it->first.bssid,0);
+         cout << "    " << mac << "     ";
+         printf("channel(%3d)     ",bea_it->second.channel);
+         cout << bea_it->second.essid << "      ";
+         cout << bea_it->second.memo << endl;
+         sequence++;
+    }
+}
+void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
+    cout << "\t\t\t      < Scanning Activate >\n";
     map<keydata, valuedata>::iterator bea_it;
     keydata k;
     valuedata v;
@@ -51,7 +67,8 @@ void parse::scanning(map<keydata, valuedata>&map_beacon){
     const u_int8_t *packet;
     struct pcap_pkthdr *pkthdr;
     pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
-    for(int i=0; i<5; i++)
+
+    while(run)
     {
        ret=pcap_next_ex(pcd, &pkthdr, &packet);
        switch (ret)
@@ -67,13 +84,11 @@ void parse::scanning(map<keydata, valuedata>&map_beacon){
                     packet+=radio->header_length+sizeof(ieee80211_probe_request_or_beacon_frame)+sizeof(ieee80211_wireless_lan_mg_beacon);
                     memcpy(k.bssid,beacon->src_addr,6);
                     bool get_data_check1{false},get_data_check2{false};
-
                     while(packet_len > 0){
                         if(get_data_check1&&get_data_check2){
                             v.sequence++;
                             break;
                         }
-
                         struct tagpara_common *tag_com = (struct tagpara_common*)packet;
                         switch (tag_com->tagnum)
                         {
@@ -122,7 +137,7 @@ void parse::scanning(map<keydata, valuedata>&map_beacon){
                         map_beacon.insert(pair<keydata, valuedata>(k,v));
                         char str[18]{0};
                         convert_type(str,k.bssid,0);
-                        cout << " " << v.sequence << " " << str << "\t" << v.channel << "\t" << v.essid << endl;
+                        cout << " \t\t" << str << "\t" << v.channel << "\t" << v.essid << endl;
                     }
                }
            }
@@ -143,6 +158,13 @@ void parse::scanning(map<keydata, valuedata>&map_beacon){
            }
            break;
            default:
+           break;
+       }
+       if(kbhit())
+       {
+           run=false;
+           system("clear");
+           pcap_close(pcd);
            break;
        }
     }

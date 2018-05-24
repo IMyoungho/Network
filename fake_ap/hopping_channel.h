@@ -6,6 +6,6 @@
 
 using namespace std;
 
-void auto_change_2ghz(char *interface, int seconds);
-void auto_change_5ghz(char *interface, int seconds);
+void auto_change_2ghz(char *interface, atomic<bool> &run);
+void auto_change_5ghz(char *interface, atomic<bool> &run);
 #endif // HOPPING_CHANNEL_H

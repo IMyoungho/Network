@@ -1,16 +1,12 @@
 #include "hopping_channel.h"
-void auto_change_2ghz(char *interface, int seconds)
-{
-    int i = 1, j = 1;
-    string base="iwconfig ";
-    string base2 =" channel ";
+string base="iwconfig ";
+string base2 =" channel ";
+void auto_change_2ghz(char *interface, atomic<bool> &run){
+int i = 1, j = 1;
     string excute_code,num;
     char *basecode;
-    time_t start_time{0},end_time{0};
-    time(&start_time);
-    while(end_time-start_time<=seconds)
+    while(run)
     {
-        time(&end_time);
         if(i>14)
         {
             if(j==13)
@@ -26,18 +22,14 @@ void auto_change_2ghz(char *interface, int seconds)
         i+=6;
     }
 }
-void auto_change_5ghz(char *interface, int seconds)
+void auto_change_5ghz(char *interface, atomic<bool>&run)
 {
     int i = 36;
-    string base="iwconfig ";
-    string base2 =" channel ";
     string excute_code,num;
     char * basecode;
-    time_t start_time{0},end_time{0};
-    time(&start_time);
-    while(end_time-start_time<=seconds)
+
+    while(run)
     {
-        time(&end_time);
         switch (i)
         {
             case 68:
