@@ -121,28 +121,6 @@ struct ieee80211_probe_request_or_beacon_frame
     uint16_t fragment_num:4;
     uint16_t sequence_num:12;
 };
-struct ieee80211_Deauthentication
-{
-    // ## radiotap
-    uint8_t revision;
-    uint8_t pad;
-    uint16_t h_len;
-    uint32_t present_flags;
-    uint8_t Data_Rate;
-    uint8_t what1;
-    uint8_t what2;
-    uint8_t what3;
-
-    // ######################
-    uint16_t frame_control;
-    uint16_t Duration;
-    uint8_t Dst_addr[6];
-    uint8_t Src_addr[6];
-    uint8_t BSSID[6];
-    uint16_t fragment_num:4;
-    uint16_t sequence_num:12;
-    uint16_t Reason_Code;
-};
 //################################## Wireless LAN_Mangement frame##################################
 struct ieee80211_wireless_lan_mg_beacon
 {

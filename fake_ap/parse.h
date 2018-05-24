@@ -11,7 +11,6 @@
 #include "key.h"
 #include "convert_type.h"
 #include "keyboard_event.h"
-#include "make_send_packet.h"
 #define BEACON 0x80
 
 using namespace std;
@@ -33,5 +32,6 @@ public:
     void show_ap(map<keydata, valuedata> &map_beacon);
     void ask_ap();
     void select_ap(map<keydata, valuedata> &map_beacon);
+    void make_packet(uint8_t *packet, int packet_length, int count);
 };
 #endif // PARSE_H

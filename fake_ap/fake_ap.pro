@@ -21,8 +21,7 @@ SOURCES += \
     key.cpp \
     convert_type.cpp \
     hopping_channel.cpp \
-    keyboard_event.cpp \
-    make_send_packet.cpp
+    keyboard_event.cpp
 
 HEADERS += \
     parse.h \
@@ -30,5 +29,4 @@ HEADERS += \
     key.h \
     convert_type.h \
     hopping_channel.h \
-    keyboard_event.h \
-    make_send_packet.h
+    keyboard_event.h
