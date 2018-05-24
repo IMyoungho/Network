@@ -51,8 +51,7 @@ void parse::show_ap(map<keydata,valuedata>&map_beacon){
          convert_type(mac,(uint8_t*)bea_it->first.bssid,0);
          cout << "    " << mac << "     ";
          printf("channel(%3d)     ",bea_it->second.channel);
-         cout << bea_it->second.essid << "      ";
-         cout << bea_it->second.memo << endl;
+         cout << bea_it->second.essid << "      "<<endl;
          sequence++;
     }
 }
@@ -67,21 +66,22 @@ void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
     const uint8_t *packet;
     struct pcap_pkthdr *pkthdr;
     pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
-    uint8_t*save_packet{0};
+    uint8_t *save_packet;
     while(run)
     {
        ret=pcap_next_ex(pcd, &pkthdr, &packet);
+
        switch (ret)
        {
            case 1:
            {
                int packet_len=pkthdr->len;
-               v.save_length =pkthdr->len;
-               save_packet=(uint8_t*)packet;
+               v.save_length = pkthdr->len;
                struct radiotap_header *radio = (struct radiotap_header*)packet;
                struct ieee80211_common *common = (struct ieee80211_common*)(packet+radio->header_length);
                if(common->frame_control_field==BEACON)
                {
+                    save_packet=(uint8_t*)packet;
                     struct ieee80211_probe_request_or_beacon_frame *beacon = (struct ieee80211_probe_request_or_beacon_frame*)(packet+radio->header_length);
                     packet+=radio->header_length+sizeof(ieee80211_probe_request_or_beacon_frame)+sizeof(ieee80211_wireless_lan_mg_beacon);
                     memcpy(k.bssid,beacon->src_addr,6);
@@ -135,9 +135,9 @@ void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
                             break;
                         }
                     }
-                    v.all_packet=save_packet;
-                    if((bea_it = map_beacon.find(k)) == map_beacon.end()){
 
+                    if((bea_it = map_beacon.find(k)) == map_beacon.end()){
+                        memcpy(v.all_packet,save_packet,v.save_length);
                         map_beacon.insert(pair<keydata, valuedata>(k,v));
                         char str[18]{0};
                         convert_type(str,k.bssid,0);
@@ -192,16 +192,7 @@ void parse::select_ap(map<keydata,valuedata>&map_beacon){
         {
             for(int i=0; i<this->ap_count; i++)
                 if(bea_it->second.sequence == this->ap_num[i])
-                {
-//                    for(int i=0; i < bea_it->second.save_length; i++)
-//                    {
-//                        if(i%16==0)
-//                            cout << endl;
-//                        printf("%02x ",bea_it->second.all_packet[i]);
-//                    }
-//                    cout << endl;
-                }
-                    //make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count);
+                    make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count);
         }
     }
 }

@@ -19,9 +19,8 @@ struct valuedata
 {
     uint8_t essid[32]{0};
     int channel;
-    uint8_t memo[30]{0};
     int sequence{0};
-    uint8_t *all_packet{0};
+    uint8_t all_packet[1500];
     int save_length{0};
 };
 

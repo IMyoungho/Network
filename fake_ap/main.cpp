@@ -17,7 +17,6 @@ int main(int argc, char *argv[])
     cout << "\n\n\t\t\t | Press Your 'R' or 'r' KEY |\n";
     parse ps(argc,argv);
     map<keydata, valuedata> map_beacon;
-    map<keydata, valuedata> ::iterator bea_it;//
     while(true){
         int num=getch();
         switch (num) {
@@ -31,18 +30,6 @@ int main(int argc, char *argv[])
                     hopping_2G.join();
                 else
                     cout << " >> Error to join thread!!\n";
-//
-                for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it)
-                {
-                    for(int i=0; i < bea_it->second.save_length; i++)
-                    {
-                        if(i%16==0)
-                            cout << endl;
-                        printf("%02x ",bea_it->second.all_packet[i]);
-                    }
-                    cout << endl;
-                }
-//
                 getchar();
             }
             break;
