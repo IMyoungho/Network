@@ -21,6 +21,8 @@ struct valuedata
     int channel;
     uint8_t memo[30]{0};
     int sequence{0};
+    uint8_t *all_packet{0};
+    int save_length{0};
 };
 
 #endif // KEY_H

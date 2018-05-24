@@ -11,6 +11,7 @@
 #include "key.h"
 #include "convert_type.h"
 #include "keyboard_event.h"
+#include "make_send_packet.h"
 #define BEACON 0x80
 
 using namespace std;
@@ -18,6 +19,9 @@ using namespace std;
 class parse {
 private:
     char *interface;
+    int ap_count;
+    int *ap_num;
+    int create_ap_count;
 public:
     parse(int argc, char *argv[]);
     void check_argc(int argc);
@@ -27,5 +31,7 @@ public:
     uint8_t *check_tag(uint8_t *data, int &datalen, uint8_t &taglen);
     void scanning(map<keydata, valuedata> &map_beacon, atomic<bool> &run);
     void show_ap(map<keydata, valuedata> &map_beacon);
+    void ask_ap();
+    void select_ap(map<keydata, valuedata> &map_beacon);
 };
 #endif // PARSE_H

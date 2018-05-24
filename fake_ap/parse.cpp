@@ -57,17 +57,17 @@ void parse::show_ap(map<keydata,valuedata>&map_beacon){
     }
 }
 void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
-    cout << "\t\t\t      < Scanning Activate >\n";
+    cout << "\n\t\t    < Scanning Activate 'S' or 's' = Stop >\n";
     map<keydata, valuedata>::iterator bea_it;
     keydata k;
     valuedata v;
     int ret;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *pcd;
-    const u_int8_t *packet;
+    const uint8_t *packet;
     struct pcap_pkthdr *pkthdr;
     pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
-
+    uint8_t*save_packet{0};
     while(run)
     {
        ret=pcap_next_ex(pcd, &pkthdr, &packet);
@@ -76,6 +76,8 @@ void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
            case 1:
            {
                int packet_len=pkthdr->len;
+               v.save_length =pkthdr->len;
+               save_packet=(uint8_t*)packet;
                struct radiotap_header *radio = (struct radiotap_header*)packet;
                struct ieee80211_common *common = (struct ieee80211_common*)(packet+radio->header_length);
                if(common->frame_control_field==BEACON)
@@ -133,11 +135,13 @@ void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
                             break;
                         }
                     }
+                    v.all_packet=save_packet;
                     if((bea_it = map_beacon.find(k)) == map_beacon.end()){
+
                         map_beacon.insert(pair<keydata, valuedata>(k,v));
                         char str[18]{0};
                         convert_type(str,k.bssid,0);
-                        cout << " \t\t" << str << "\t" << v.channel << "\t" << v.essid << endl;
+                        cout << " \t\t" << str << "\t" << v.channel << "\t" << v.essid << " length:" << v.save_length << endl;
                     }
                }
            }
@@ -167,5 +171,37 @@ void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
            pcap_close(pcd);
            break;
        }
+    }
+}
+void parse::ask_ap(){
+    cout << " >> Create Fake AP " << endl;
+    cout << "   >> How many AP's would you like to target? = ";
+    cin >> this->ap_count;
+    cout << "     >> Select the AP number = ";
+    this->ap_num = new int[this->ap_count];
+    for(int i=0; i < this->ap_count; i++)
+        cin >> this->ap_num[i];
+    cout << "       >> How may AP's do you create? = ";
+    cin >> this->create_ap_count;
+}
+void parse::select_ap(map<keydata,valuedata>&map_beacon){
+    map<keydata, valuedata>::iterator bea_it;
+    for(int i=0; i<this->create_ap_count; i++)
+    {
+        for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it)
+        {
+            for(int i=0; i<this->ap_count; i++)
+                if(bea_it->second.sequence == this->ap_num[i])
+                {
+//                    for(int i=0; i < bea_it->second.save_length; i++)
+//                    {
+//                        if(i%16==0)
+//                            cout << endl;
+//                        printf("%02x ",bea_it->second.all_packet[i]);
+//                    }
+//                    cout << endl;
+                }
+                    //make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count);
+        }
     }
 }
