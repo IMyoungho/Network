@@ -200,28 +200,47 @@ void parse::select_ap(map<keydata,valuedata>&map_beacon){
 }
 
 void parse::make_packet(uint8_t *packet, int packet_length, int count){
-    for(int i=0; i<packet_length; i++){
-        if(i%16==0)
-            cout << endl;
-        printf("%02x ",packet[i]);
-    }
-    cout << endl;
+    pcap_t *pcd;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
     //add channel thread
-
+    uint8_t *savepacket=packet;
     struct radiotap_header *rh = (struct radiotap_header*)packet;
     packet+=rh->header_length+sizeof(ieee80211_probe_request_or_beacon_frame)+sizeof(ieee80211_wireless_lan_mg_beacon);
     struct tagpara_common *tag_com = (struct tagpara_common*)packet;
     if(tag_com->tagnum==0x00){
-        cout << "bug?"<<endl;
         string ssid[count];
         int str_len[count]{0};
+        int new_packet_len[count]{0};
         const char *ssid_char[count]{0};
         cout << "\t  >> Please enter the name of the ap you want to change = ";
         for(int i=0; i<count; i++)
         {
-            str_len[i]=ssid[i].length();
             getline(cin,ssid[i]);
+            str_len[i]=ssid[i].length();
             ssid_char[i] = ssid[i].c_str();
+            if(str_len[i]>tag_com->taglen)
+                new_packet_len[i]=packet_length+(str_len[i]-(int)tag_com->taglen);
+            else if(str_len[i]<tag_com->taglen)
+                new_packet_len[i]=packet_length-((int)tag_com->taglen-str_len[i]);
+            else
+                new_packet_len[i]=packet_length;
+        }
+        int baselength=rh->header_length+sizeof(ieee80211_probe_request_or_beacon_frame)+sizeof(ieee80211_wireless_lan_mg_beacon);
+        int savepacket2_len;
+        uint8_t *savepacket2=packet;
+        savepacket2+=sizeof(struct tagpara_common)+tag_com->taglen;
+        for(int i=0; i<count; i++)
+        {
+            savepacket2_len=(new_packet_len[i]-baselength-sizeof(struct tagpara_common)-str_len[i]);
+            tag_com->taglen=str_len[i];
+            uint8_t sendpacket[1500];
+            memcpy(sendpacket,savepacket,baselength);
+            memcpy(sendpacket+baselength,tag_com,sizeof(struct tagpara_common));
+            memcpy(sendpacket+baselength+sizeof(struct tagpara_common),ssid_char[i],str_len[i]);
+            memcpy(sendpacket+baselength+sizeof(struct tagpara_common)+str_len[i],savepacket2,savepacket2_len);
+
+            pcap_sendpacket(pcd,(const u_char*)sendpacket,new_packet_len[i]);
         }
     }
 
