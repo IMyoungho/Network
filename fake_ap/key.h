@@ -22,6 +22,20 @@ struct valuedata
     int sequence{0};
     uint8_t all_packet[1500];
     int save_length{0};
+
 };
+class setdata{
+public:
+    uint8_t send_packet[1500];
+    bool operator<(const setdata setd) const{
+        return tie(send_packet) < tie(setd.send_packet);
+    }
+}__attribute__((packed));
+struct setvalue{
+    int length;
+};
+
+
+
 
 #endif // KEY_H

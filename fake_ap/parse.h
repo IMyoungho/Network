@@ -7,6 +7,8 @@
 #include <string.h>
 #include <map>
 #include <atomic>
+#include <thread>
+#include "hopping_channel.h"
 #include "ieee80211.h"
 #include "key.h"
 #include "convert_type.h"
@@ -32,6 +34,6 @@ public:
     void show_ap(map<keydata, valuedata> &map_beacon);
     void ask_ap();
     void select_ap(map<keydata, valuedata> &map_beacon);
-    void make_packet(uint8_t *packet, int packet_length, int count);
+    void make_packet(uint8_t *packet, int packet_length, int count, map<setdata,setvalue> &set_packet);
 };
 #endif // PARSE_H

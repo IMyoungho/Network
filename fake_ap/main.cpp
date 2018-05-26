@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
             case 114:
             {
                 atomic<bool>run{true};
-                thread hopping_2G(auto_change_2ghz,ps.using_interface(),ref(run)); //atomic and second add!!
+                thread hopping_2G(auto_change_2ghz,ps.using_interface(),ref(run));
                 ps.scanning(map_beacon,ref(run));
                 if(hopping_2G.joinable()==true)
                     hopping_2G.join();

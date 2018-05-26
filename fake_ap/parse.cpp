@@ -70,7 +70,6 @@ void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
     while(run)
     {
        ret=pcap_next_ex(pcd, &pkthdr, &packet);
-
        switch (ret)
        {
            case 1:
@@ -187,23 +186,48 @@ void parse::ask_ap(){
 void parse::select_ap(map<keydata,valuedata>&map_beacon){
     int check{0};
     map<keydata, valuedata>::iterator bea_it;
+    map<setdata,setvalue> set_packet;
+    map<setdata,setvalue>::iterator set_it;
     for(int i=0; i<this->create_ap_count; i++){
         for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
             if(check>this->ap_count)
                 break;
             if(bea_it->second.sequence == this->ap_num[i]){
-                make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count);
+                make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count,set_packet);
                 check++;
             }
         }
     }
-}
-
-void parse::make_packet(uint8_t *packet, int packet_length, int count){
     pcap_t *pcd;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
+    atomic<bool>run{true};
+    thread hopping_2G(auto_change_2ghz,this->interface,ref(run));
+    while(run)
+    {
+        for (set_it = set_packet.begin(); set_it != set_packet.end(); ++set_it){
+              pcap_sendpacket(pcd,(const u_char*)set_it->first.send_packet,set_it->second.length);
+              sleep(0.5);
+              cout << ">> AP is created!!"<<endl;
+        }
+        if(kbhit())
+        {
+            run=false;
+            system("clear");
+            pcap_close(pcd);
+            break;
+        }
+    }
+    if(hopping_2G.joinable()==true)
+        hopping_2G.join();
+    else
+        cout << " >> Error to join thread!!\n";
+}
+
+void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setdata, setvalue> &set_packet){
     //add channel thread
+    setdata sk;
+    setvalue sv;
     uint8_t *savepacket=packet;
     struct radiotap_header *rh = (struct radiotap_header*)packet;
     packet+=rh->header_length+sizeof(ieee80211_probe_request_or_beacon_frame)+sizeof(ieee80211_wireless_lan_mg_beacon);
@@ -230,16 +254,20 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count){
         int savepacket2_len;
         uint8_t *savepacket2=packet;
         savepacket2+=sizeof(struct tagpara_common)+tag_com->taglen;
+
         for(int i=0; i<count; i++)
         {
             savepacket2_len=(new_packet_len[i]-baselength-sizeof(struct tagpara_common)-str_len[i]);
             tag_com->taglen=str_len[i];
-            uint8_t sendpacket[1500];
+            uint8_t sendpacket[1500]{0};
             memcpy(sendpacket,savepacket,baselength);
             memcpy(sendpacket+baselength,tag_com,sizeof(struct tagpara_common));
             memcpy(sendpacket+baselength+sizeof(struct tagpara_common),ssid_char[i],str_len[i]);
             memcpy(sendpacket+baselength+sizeof(struct tagpara_common)+str_len[i],savepacket2,savepacket2_len);
-            pcap_sendpacket(pcd,(const u_char*)sendpacket,new_packet_len[i]);
+            sv.length=new_packet_len[i];
+            memcpy(sk.send_packet,sendpacket,new_packet_len[i]);
+            set_packet.insert(pair<setdata,setvalue>(sk,sv));
+
         }
     }
     getchar();
