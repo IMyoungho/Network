@@ -213,7 +213,7 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count){
         int str_len[count]{0};
         int new_packet_len[count]{0};
         const char *ssid_char[count]{0};
-        cout << "\t  >> Please enter the name of the ap you want to change = ";
+        cout << "\t  >> Please enter the "<< count << " name of the ap you want to change = ";
         for(int i=0; i<count; i++)
         {
             getline(cin,ssid[i]);
@@ -239,9 +239,8 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count){
             memcpy(sendpacket+baselength,tag_com,sizeof(struct tagpara_common));
             memcpy(sendpacket+baselength+sizeof(struct tagpara_common),ssid_char[i],str_len[i]);
             memcpy(sendpacket+baselength+sizeof(struct tagpara_common)+str_len[i],savepacket2,savepacket2_len);
-
             pcap_sendpacket(pcd,(const u_char*)sendpacket,new_packet_len[i]);
         }
     }
-
+    getchar();
 }
