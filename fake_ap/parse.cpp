@@ -185,21 +185,22 @@ void parse::ask_ap(){
     cin >> this->create_ap_count;
 }
 void parse::select_ap(map<keydata,valuedata>&map_beacon){
+    int check{0};
     map<keydata, valuedata>::iterator bea_it;
-    for(int i=0; i<this->create_ap_count; i++)
-    {
-        for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it)
-        {
-            for(int i=0; i<this->ap_count; i++)
-                if(bea_it->second.sequence == this->ap_num[i])
-                    make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count);
+    for(int i=0; i<this->create_ap_count; i++){
+        for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
+            if(check>this->ap_count)
+                break;
+            if(bea_it->second.sequence == this->ap_num[i]){
+                make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count);
+                check++;
+            }
         }
     }
 }
 
 void parse::make_packet(uint8_t *packet, int packet_length, int count){
-    for(int i=0; i<packet_length; i++)
-    {
+    for(int i=0; i<packet_length; i++){
         if(i%16==0)
             cout << endl;
         printf("%02x ",packet[i]);
@@ -211,12 +212,15 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count){
     packet+=rh->header_length+sizeof(ieee80211_probe_request_or_beacon_frame)+sizeof(ieee80211_wireless_lan_mg_beacon);
     struct tagpara_common *tag_com = (struct tagpara_common*)packet;
     if(tag_com->tagnum==0x00){
-        string ssid[count]{0};
+        cout << "bug?"<<endl;
+        string ssid[count];
+        int str_len[count]{0};
         const char *ssid_char[count]{0};
         cout << "\t  >> Please enter the name of the ap you want to change = ";
         for(int i=0; i<count; i++)
         {
-            cin >> ssid[i];
+            str_len[i]=ssid[i].length();
+            getline(cin,ssid[i]);
             ssid_char[i] = ssid[i].c_str();
         }
     }
