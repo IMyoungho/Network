@@ -33,7 +33,6 @@ int main(int argc, char *argv[])
                 getchar();
             }
             break;
-
             case 87:
             case 119:
             {

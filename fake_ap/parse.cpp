@@ -181,7 +181,7 @@ void parse::ask_ap(){
     for(int i=0; i < this->ap_count; i++)
         cin >> this->ap_num[i];
     cout << "       >> How may AP's do you create? = ";
-    cin >> this->create_ap_count;
+    cin >> this->create_ap_count;            
 }
 void parse::select_ap(map<keydata,valuedata>&map_beacon){
     int check{0};
@@ -207,7 +207,6 @@ void parse::select_ap(map<keydata,valuedata>&map_beacon){
     {
         for (set_it = set_packet.begin(); set_it != set_packet.end(); ++set_it){
               pcap_sendpacket(pcd,(const u_char*)set_it->first.send_packet,set_it->second.length);
-              sleep(0.5);
               cout << ">> AP is created!!"<<endl;
         }
         if(kbhit())
@@ -238,8 +237,8 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setda
         int str_len[count]{0};
         int new_packet_len[count]{0};
         const char *ssid_char[count];
-        getchar();
-        cout << "\t  >> Please enter the "<< count << " name of the ap you want to change = \n";
+        __fpurge(stdin); //where...
+        cout << "\t  >> Please enter the "<< count << " name of the ap you want to change = "<<endl;
         for(int i=0; i<count; i++)
         {
             getline(cin,ssid[i]);

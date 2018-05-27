@@ -1,6 +1,7 @@
 #ifndef PARSE_H
 #define PARSE_H
 #include <iostream>
+#include <stdio_ext.h>
 #include <pcap.h>
 #include <unistd.h>
 #include <stdint.h>
