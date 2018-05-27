@@ -226,6 +226,7 @@ void parse::select_ap(map<keydata,valuedata>&map_beacon){
 
 void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setdata, setvalue> &set_packet){
     //add channel thread
+    map<setdata,setvalue>::iterator set_it;
     setdata sk;
     setvalue sv;
     uint8_t *savepacket=packet;
@@ -236,13 +237,14 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setda
         string ssid[count];
         int str_len[count]{0};
         int new_packet_len[count]{0};
-        const char *ssid_char[count]{0};
-        cout << "\t  >> Please enter the "<< count << " name of the ap you want to change = ";
+        const char *ssid_char[count];
+        getchar();
+        cout << "\t  >> Please enter the "<< count << " name of the ap you want to change = \n";
         for(int i=0; i<count; i++)
         {
             getline(cin,ssid[i]);
-            str_len[i]=ssid[i].length();
             ssid_char[i] = ssid[i].c_str();
+            str_len[i]=ssid[i].length();
             if(str_len[i]>tag_com->taglen)
                 new_packet_len[i]=packet_length+(str_len[i]-(int)tag_com->taglen);
             else if(str_len[i]<tag_com->taglen)
@@ -266,8 +268,8 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setda
             memcpy(sendpacket+baselength+sizeof(struct tagpara_common)+str_len[i],savepacket2,savepacket2_len);
             sv.length=new_packet_len[i];
             memcpy(sk.send_packet,sendpacket,new_packet_len[i]);
-            set_packet.insert(pair<setdata,setvalue>(sk,sv));
-
+            if((set_it = set_packet.find(sk)) == set_packet.end())
+                set_packet.insert(pair<setdata,setvalue>(sk,sv));
         }
     }
     getchar();
