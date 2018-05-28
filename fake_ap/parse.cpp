@@ -188,16 +188,39 @@ void parse::select_ap(map<keydata,valuedata>&map_beacon){
     map<keydata, valuedata>::iterator bea_it;
     map<setdata,setvalue> set_packet;
     map<setdata,setvalue>::iterator set_it;
-    for(int i=0; i<this->create_ap_count; i++){
-        for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
-            if(check>this->ap_count)
-                break;
-            if(bea_it->second.sequence == this->ap_num[i]){
-                make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count,set_packet);
-                check++;
+    switch (this->create_ap_count) {
+    case 1:
+    {
+        for(int i=0; i<this->create_ap_count*this->ap_count; i++){
+            for(int i=0; i<this->create_ap_count; i++){
+                for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
+                    if(check>this->ap_count)
+                        break;
+                    if(bea_it->second.sequence == this->ap_num[i]){
+                        make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count,set_packet);
+                        check++;
+                    }
+                }
             }
         }
     }
+    break;
+    default:
+    {
+        for(int i=0; i<this->create_ap_count; i++){
+            for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
+                if(check>this->ap_count)
+                    break;
+                if(bea_it->second.sequence == this->ap_num[i]){
+                    make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count,set_packet);
+                    check++;
+                }
+            }
+        }
+    }
+    break;
+    }
+
     pcap_t *pcd;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
