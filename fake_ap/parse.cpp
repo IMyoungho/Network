@@ -237,8 +237,8 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setda
         int str_len[count]{0};
         int new_packet_len[count]{0};
         const char *ssid_char[count];
-        __fpurge(stdin); //where...
         cout << "\t  >> Please enter the "<< count << " name of the ap you want to change = "<<endl;
+        __fpurge(stdin);
         for(int i=0; i<count; i++)
         {
             getline(cin,ssid[i]);
@@ -271,5 +271,5 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setda
                 set_packet.insert(pair<setdata,setvalue>(sk,sv));
         }
     }
-    getchar();
+    __fpurge(stdin);
 }
