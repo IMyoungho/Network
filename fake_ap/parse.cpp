@@ -202,7 +202,6 @@ void parse::select_ap(map<keydata,valuedata>&map_beacon){
     char errbuf[PCAP_ERRBUF_SIZE];
     pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
     atomic<bool>run{true};
-    thread hopping_2G(auto_change_2ghz,this->interface,ref(run));
     while(run)
     {
         for (set_it = set_packet.begin(); set_it != set_packet.end(); ++set_it){
@@ -217,10 +216,6 @@ void parse::select_ap(map<keydata,valuedata>&map_beacon){
             break;
         }
     }
-    if(hopping_2G.joinable()==true)
-        hopping_2G.join();
-    else
-        cout << " >> Error to join thread!!\n";
 }
 
 void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setdata, setvalue> &set_packet){
@@ -256,8 +251,7 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setda
         uint8_t *savepacket2=packet;
         savepacket2+=sizeof(struct tagpara_common)+tag_com->taglen;
 
-        for(int i=0; i<count; i++)
-        {
+        for(int i=0; i<count; i++){
             savepacket2_len=(new_packet_len[i]-baselength-sizeof(struct tagpara_common)-str_len[i]);
             tag_com->taglen=str_len[i];
             uint8_t sendpacket[1500]{0};
@@ -269,7 +263,7 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setda
             memcpy(sk.send_packet,sendpacket,new_packet_len[i]);
             if((set_it = set_packet.find(sk)) == set_packet.end())
                 set_packet.insert(pair<setdata,setvalue>(sk,sv));
-        }
+        }    
+        __fpurge(stdin);
     }
-    __fpurge(stdin);
 }
