@@ -35,6 +35,7 @@ public:
     void show_ap(map<keydata, valuedata> &map_beacon);
     void ask_ap();
     void select_ap(map<keydata, valuedata> &map_beacon);
+    void count_check(map<keydata,valuedata>&map_beacon, map<setdata, setvalue> &set_packet);
     void make_packet(uint8_t *packet, int packet_length, int count, map<setdata,setvalue> &set_packet);
 };
 #endif // PARSE_H

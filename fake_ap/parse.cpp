@@ -183,44 +183,37 @@ void parse::ask_ap(){
     cout << "       >> How may AP's do you create? = ";
     cin >> this->create_ap_count;            
 }
-void parse::select_ap(map<keydata,valuedata>&map_beacon){
+void parse::count_check(map<keydata,valuedata>&map_beacon, map<setdata,setvalue>&set_packet){
     int check{0};
-    map<keydata, valuedata>::iterator bea_it;
+    map<keydata,valuedata>::iterator bea_it;
+    for(int i=0; i<this->create_ap_count; i++){
+        for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
+            if(check>this->ap_count)
+                break;
+            if(bea_it->second.sequence == this->ap_num[i]){
+                make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count,set_packet);
+                check++;
+            }
+        }
+    }
+}
+void parse::select_ap(map<keydata,valuedata>&map_beacon){
     map<setdata,setvalue> set_packet;
     map<setdata,setvalue>::iterator set_it;
     switch (this->create_ap_count) {
     case 1:
     {
         for(int i=0; i<this->create_ap_count*this->ap_count; i++){
-            for(int i=0; i<this->create_ap_count; i++){
-                for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
-                    if(check>this->ap_count)
-                        break;
-                    if(bea_it->second.sequence == this->ap_num[i]){
-                        make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count,set_packet);
-                        check++;
-                    }
-                }
-            }
+            count_check(map_beacon,set_packet);
         }
     }
     break;
     default:
     {
-        for(int i=0; i<this->create_ap_count; i++){
-            for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
-                if(check>this->ap_count)
-                    break;
-                if(bea_it->second.sequence == this->ap_num[i]){
-                    make_packet((uint8_t*)bea_it->second.all_packet, bea_it->second.save_length, this->create_ap_count,set_packet);
-                    check++;
-                }
-            }
-        }
+        count_check(map_beacon,set_packet);
     }
     break;
     }
-
     pcap_t *pcd;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
@@ -255,10 +248,9 @@ void parse::make_packet(uint8_t *packet, int packet_length, int count, map<setda
         int str_len[count]{0};
         int new_packet_len[count]{0};
         const char *ssid_char[count];
-        cout << "\t  >> Please enter the "<< count << " name of the ap you want to change = "<<endl;
+        cout << "\t  >> Please enter the "<< count << " name of the ap you want to change = "<< endl;
         __fpurge(stdin);
-        for(int i=0; i<count; i++)
-        {
+        for(int i=0; i<count; i++){
             getline(cin,ssid[i]);
             ssid_char[i] = ssid[i].c_str();
             str_len[i]=ssid[i].length();
