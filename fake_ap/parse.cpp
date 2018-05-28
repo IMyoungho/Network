@@ -163,8 +163,7 @@ void parse::scanning(map<keydata, valuedata>&map_beacon, atomic<bool> &run){
            default:
            break;
        }
-       if(kbhit())
-       {
+       if(kbhit()){
            run=false;
            system("clear");
            pcap_close(pcd);
@@ -186,7 +185,7 @@ void parse::ask_ap(){
 void parse::count_check(map<keydata,valuedata>&map_beacon, map<setdata,setvalue>&set_packet){
     int check{0};
     map<keydata,valuedata>::iterator bea_it;
-    for(int i=0; i<this->create_ap_count; i++){
+    for(int i=0; i<this->ap_count; i++){
         for(bea_it = map_beacon.begin(); bea_it !=map_beacon.end(); ++bea_it){
             if(check>this->ap_count)
                 break;
@@ -201,31 +200,26 @@ void parse::select_ap(map<keydata,valuedata>&map_beacon){
     map<setdata,setvalue> set_packet;
     map<setdata,setvalue>::iterator set_it;
     switch (this->create_ap_count) {
-    case 1:
-    {
-        for(int i=0; i<this->create_ap_count*this->ap_count; i++){
-            count_check(map_beacon,set_packet);
+        case 1:
+        {
+            for(int i=0; i<this->create_ap_count; i++)
+                count_check(map_beacon,set_packet);
         }
-    }
-    break;
-    default:
-    {
-        count_check(map_beacon,set_packet);
-    }
-    break;
+        break;
+        default:
+            count_check(map_beacon,set_packet);
+        break;
     }
     pcap_t *pcd;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcd=pcap_open_live(this->interface,BUFSIZ,1,1,errbuf);
     atomic<bool>run{true};
-    while(run)
-    {
+    while(run){
         for (set_it = set_packet.begin(); set_it != set_packet.end(); ++set_it){
               pcap_sendpacket(pcd,(const u_char*)set_it->first.send_packet,set_it->second.length);
               cout << ">> AP is created!!"<<endl;
         }
-        if(kbhit())
-        {
+        if(kbhit()){
             run=false;
             system("clear");
             pcap_close(pcd);

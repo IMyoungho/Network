@@ -8,12 +8,12 @@
 #include "hopping_channel.h"
 #include "convert_type.h"
 
-
 using namespace std;
 
 int main(int argc, char *argv[])
 {
     cout << "____________________________________Fake AP____________________________________\n";
+    cout << "\t\t\tCopyrightⓒ 2018.05.29 By IMYoungho \n";
     cout << "\n\n\t\t\t | Press Your 'R' or 'r' KEY |\n";
     parse ps(argc,argv);
     map<keydata, valuedata> map_beacon;
