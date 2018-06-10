@@ -28,7 +28,11 @@ void parse_data_in_linux(parse_data *parse)
 
     //-----------------------------get my(attacker) ip!!-----------------------------
     FILE *i;
-    i=popen("ip addr | grep 'inet' | grep brd | awk '{printf $2}' | awk -F/ ' {printf $1}'","r");
+    string base1 = "ip addr | grep '";
+    string base2 = "' | grep brd | awk '{printf $2}' | awk -F/ ' {printf $1}'";
+    base1+=interface+base2;
+    const char* cmd = base1.c_str();
+    i=popen(cmd,"r");
     char host_ip[15];
     fgets(host_ip,15,i);
     parse->get_attacker_ip(host_ip);
