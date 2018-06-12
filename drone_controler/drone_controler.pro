@@ -18,11 +18,11 @@ SOURCES += \
         main.cpp \
     parse.cpp \
     push_button.cpp \
-    move_packet.cpp \
-    convert_type.cpp
+    convert_type.cpp \
+    cal_checksum.cpp
 
 HEADERS += \
     parse.h \
     push_button.h \
-    move_packet.h \
-    convert_type.h
+    convert_type.h \
+    cal_checksum.h

@@ -9,7 +9,8 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     parse ps(argc,argv);
-    ps.make_packet();
+    cal_checksum cc;
+    ps.make_common_packet(&cc);
     while(true){
         int num=getch();
         switch (num) {
