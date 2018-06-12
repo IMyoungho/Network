@@ -17,8 +17,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
     parse.cpp \
-    push_button.cpp
+    push_button.cpp \
+    move_packet.cpp \
+    convert_type.cpp
 
 HEADERS += \
     parse.h \
-    push_button.h
+    push_button.h \
+    move_packet.h \
+    convert_type.h

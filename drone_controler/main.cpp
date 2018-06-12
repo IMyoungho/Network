@@ -5,10 +5,11 @@
 #include "push_button.h"
 
 using namespace std;
-
+//vm이기때문에 eth0로 쏴야함 그럼 host에서 wifi3 즉 무선랜카드로 패킷이 나감
 int main(int argc, char *argv[])
 {
     parse ps(argc,argv);
+    ps.make_packet();
     while(true){
         int num=getch();
         switch (num) {
