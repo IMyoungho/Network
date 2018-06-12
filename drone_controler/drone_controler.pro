@@ -1,5 +1,5 @@
 QT -= gui
-LIBS +=-lpcap
+LIBS+=-lpcap
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
@@ -17,12 +17,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
     parse.cpp \
-    push_button.cpp \
     convert_type.cpp \
-    cal_checksum.cpp
+    cal_checksum.cpp \
+    push_button.cpp
 
 HEADERS += \
     parse.h \
-    push_button.h \
     convert_type.h \
-    cal_checksum.h
+    cal_checksum.h \
+    push_button.h

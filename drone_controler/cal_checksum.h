@@ -51,6 +51,7 @@ public:
   void get_icmphdr(struct icmphdr *icp);
   void get_pesudo(int type);
   uint16_t checksum(int select_checksum);
+  uint16_t checksum(int select_checksum, uint8_t *data);
   int calculation(uint8_t *temp, int length, bool change);
 };
 

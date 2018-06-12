@@ -36,7 +36,7 @@ void parse::make_common_packet(cal_checksum *cc){
     ip->id=ntohs(0x1120);
 
     struct udphdr *up = new udphdr;
-    up->dest=ntohs(0x8889);
+    up->dest=ntohs(0x22b9);
     up->source=ntohs(0xf405);
     make_excute(ep,ip,up,cc);
     make_take_off(ep,ip,up,cc);
@@ -58,8 +58,9 @@ void parse::make_take_off(struct ether_header*ep, struct iphdr *ip, struct udphd
     up->len=ntohs(0x000f);
     cc->get_udphdr(up);
     cc->get_pesudo(udpchecksum);
-    up->check=cc->checksum(udpchecksum);
     uint8_t data[7]={0x74,0x61,0x6b,0x65,0x6f,0x66,0x66};
+    up->check=ntohs(cc->checksum(udpchecksum,data));
+
     memcpy(this->takeoff,(uint8_t*)ep,sizeof(ether_header));
     memcpy(this->takeoff+sizeof(ether_header),(uint8_t*)ip,ip->ihl*4);
     memcpy(this->takeoff+sizeof(ether_header)+ip->ihl*4,(uint8_t*)up,sizeof(udphdr));
