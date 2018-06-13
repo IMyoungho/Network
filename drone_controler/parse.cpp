@@ -56,6 +56,7 @@ void parse::make_excute(struct ether_header*ep, struct iphdr *ip, struct udphdr*
     switch (type) {
         case upexcute:
         case rightexcute:
+        case goexcute:
         {
             ip->tot_len=ntohs(0x0028);
             cc->get_iphdr(ip);
@@ -73,16 +74,6 @@ void parse::make_excute(struct ether_header*ep, struct iphdr *ip, struct udphdr*
             cc->get_iphdr(ip);
             ip->check=ntohs(cc->checksum(ipchecksum));
             up->len=ntohs(0x0015);
-            cc->get_udphdr(up);
-            cc->get_pesudo(udpchecksum);
-        }
-        break;
-        case goexcute:
-        {
-            ip->tot_len=ntohs(0x0026);
-            cc->get_iphdr(ip);
-            ip->check=ntohs(cc->checksum(ipchecksum));
-            up->len=ntohs(0x0012);
             cc->get_udphdr(up);
             cc->get_pesudo(udpchecksum);
         }
@@ -120,13 +111,6 @@ void parse::make_excute(struct ether_header*ep, struct iphdr *ip, struct udphdr*
             memcpy(this->go_excute+sizeof(ether_header),(uint8_t*)ip,ip->ihl*4);
             memcpy(this->go_excute+sizeof(ether_header)+ip->ihl*4,(uint8_t*)up,sizeof(udphdr));
             memcpy(this->go_excute+sizeof(ether_header)+ip->ihl*4+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
-            for(int i=0; i<54; i++)
-            {
-                if(i%16==0)
-                    cout << endl;
-                printf("%02x ",this->go_excute[i]);
-            }
-
         }
         break;
         case backexcute:
