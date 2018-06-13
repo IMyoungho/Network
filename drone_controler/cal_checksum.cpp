@@ -73,12 +73,12 @@ uint16_t cal_checksum::checksum(int select_checksum){
             temp = new uint8_t[length];
             memcpy(temp,(uint8_t*)this->iph,length);
             checksum = calculation(temp,length,false);
+            delete []temp;
         }
         break;
         default:
             break;
     }
-    delete []temp;
     return checksum;
 }
 uint16_t cal_checksum::checksum(int select_checksum, uint8_t *data){
@@ -94,12 +94,12 @@ uint16_t cal_checksum::checksum(int select_checksum, uint8_t *data){
             memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->udph, sizeof(struct udphdr));
             memcpy(temp+sizeof(struct pesudo)+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
             checksum = calculation(temp,length,true);
+
         }
         break;
         default:
             break;
     }
-    delete []temp;
     return checksum;
 }
 
