@@ -4,7 +4,9 @@ CONFIG -= app_bundle
 CONFIG -= qt
 LIBS += -lpcap
 SOURCES += main.cpp \
-    parse.cpp
+    parse.cpp \
+    come_on_packet.cpp
+    
 
 HEADERS += \
     parse.h \
