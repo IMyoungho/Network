@@ -9,5 +9,5 @@
 
 using namespace std;
 
-void replay_normal_packet(parse_data *parse,pcap_t *ph);
+void relay_normal_packet(parse_data *parse,pcap_t *ph);
 #endif // REPLAY_NORMAL_PACKET_H

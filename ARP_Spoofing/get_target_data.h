@@ -1,13 +1,14 @@
-#ifndef GET_TARGET_DATA_H
-#define GET_TARGET_DATA_H
-
-#include "make_request_packet.h"
+#ifndef GET_GATEWAY_DATA_H
+#define GET_GATEWAY_DATA_H
+#include <string.h>
+#include <unistd.h>
+#include <pcap.h>
+#include <netinet/ether.h>
+#include "parse_data.h"
 #include "send_packet.h"
-void get_target_data(parse_data *parse) //fix here
-{
-    //***************************Make ARP target request Packet*****************************
-    uint8_t ask_target_packet[42]{0};
-    make_request_packet(parse,ask_target_packet,*parse->using_target_ip());
-    parse->get_target_mac(send_receive_packet(parse,ask_target_packet,42));
-}
-#endif // GET_TARGET_DATA_H
+#include "make_request_packet.h"
+
+using namespace std;
+
+void get_target_data(parse_data *parse); //fix here
+#endif // GET_GATEWAY_DATA_H
