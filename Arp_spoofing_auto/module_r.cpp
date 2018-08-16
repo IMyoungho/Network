@@ -1,18 +1,30 @@
 #include "module_r.h"
-//void timer(parse *ps, time_t start_time, time_t end_time,atomic<bool>&run){
-//    cout << "timer start" <<endl;
-//    time(&start_time);
-//    ps->get_start_time(start_time);
-//    cout << "start2 = " << ps->using_start_time() << endl;
-//    sleep(2);
-//    time(&end_time);
-//    ps->get_end_time(end_time);
-//    cout << "end2 = " << ps->using_end_time() << endl;
-
-//    if(end_time - start_time ==2)
-//        run=false;
-//}
-
+void finish_packet(parse *ps){ // 끝내기위해서 보냄.. 나에게 더이상 패킷이 안들어오면 정지되지않기때문에 -> 나중에 수정이 필요할듯..
+    uint8_t packet[42];
+    struct ether_header ep;
+    struct arp_header ap;
+    struct using_arp_type_data arp_assist;
+    pcap_t *pd;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    pd=pcap_open_live(ps->using_interface(), BUFSIZ, 1 , 1, errbuf);
+    memcpy(ep.ether_shost,ps->using_attacker_mac(),6);
+    memcpy(ep.ether_dhost,ps->using_broadcast(),6);
+    ep.ether_type=arp_assist.ether_arp_type;
+    ap.hardware_type=arp_assist.hardware_type;
+    ap.protocol_type=arp_assist.ipv4_type;
+    ap.hardware_size=arp_assist.hardware_size;
+    ap.protocol_size=arp_assist.protocol_size;
+    ap.opcode=arp_assist.request_opcode;
+    memcpy(ap.src_mac,ps->using_attacker_mac(),6);
+    ap.src_ip=ps->using_attacker_ip();
+    ap.dst_ip=ps->using_attacker_ip();
+    memcpy(ap.dst_mac,ps->using_broadcast(),6);
+    memcpy(packet,(uint8_t *)&ep,sizeof(ether_header));
+    memcpy(packet+sizeof(ether_header), (uint8_t*)&ap, sizeof(arp_header));
+    sleep(3);
+    pcap_sendpacket(pd,packet,42);
+    cout << "[!] Sending finish packet" << endl;
+}
 
 void receive_arp_packet(parse *ps, map<keydata,valuedata>data_map){
     map<keydata,valuedata>::iterator data_it;
@@ -24,13 +36,14 @@ void receive_arp_packet(parse *ps, map<keydata,valuedata>data_map){
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *pcd = pcap_open_live(ps->using_interface(), BUFSIZ, 1 , 1, errbuf);
 
-//    time_t start, end;  //temp
-//    atomic <bool>run{true};  //temp
-//    thread tic_toc(timer,ps, start,end,ref(run));  //temp
-//    tic_toc.join();  //temp
+    time_t start_time = time(&start_time);
+    time_t end_time=0;
 
-    while(true){  //insert stop function !!
+    thread finish(finish_packet,ps);
+
+    while(end_time-start_time<=2){  //insert stop function !!
         ret=pcap_next_ex(pcd, &pkthdr, &packet);
+        time(&end_time);
         switch (ret)
         {
             case 1:
@@ -40,7 +53,7 @@ void receive_arp_packet(parse *ps, map<keydata,valuedata>data_map){
                 if(ep->ether_type==ntohs(ETHERTYPE_ARP))
                 {
                     struct arp_header *ap = (struct arp_header*)packet;
-                    if(ap->dst_ip==ps->using_attacker_ip() && ap->src_ip!=ps->using_attacker_ip())
+                    if(ap->dst_ip==ps->using_attacker_ip() && ap->src_ip!=ps->using_attacker_ip())//not mymac(attacker)
                     {
                         memcpy(k.mac,ap->src_mac,6);
                         v.ip=ap->src_ip;
@@ -52,6 +65,7 @@ void receive_arp_packet(parse *ps, map<keydata,valuedata>data_map){
                         else{ //new data map insert
                             data_map.insert(pair<keydata, valuedata>(k,v));
                             cout << " [+] R E G I S T R A T I O N" << endl;
+
                         }
                     }
                 }
@@ -74,11 +88,12 @@ void receive_arp_packet(parse *ps, map<keydata,valuedata>data_map){
             break;
         }
     }
+    finish.join();
     cout << "receive finsih" << endl;
 }
 
 
-void make_arp_packet(parse *ps){ //map을 인자로 make_arp_scanning? function name??
+void send_scan_packet(parse *ps){ //map을 인자로 make_arp_scanning? function name??
     uint8_t arp_packet[42];
     struct ether_header ep;
     struct arp_header ap;
@@ -111,5 +126,4 @@ void make_arp_packet(parse *ps){ //map을 인자로 make_arp_scanning? function 
         sleep(0.01);
     }
     pcap_close(ppd);
-    //ps->show_packet(arp_packet,42);
 }

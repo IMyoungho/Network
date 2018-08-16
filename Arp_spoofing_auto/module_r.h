@@ -16,5 +16,5 @@
 using namespace std;
 
 void receive_arp_packet(parse *ps, map<keydata, valuedata> data_map);
-void make_arp_packet(parse *ps);
+void send_scan_packet(parse *ps);
 #endif // MODULE_R_H
