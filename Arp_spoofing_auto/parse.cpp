@@ -79,3 +79,18 @@ void parse::show_packet(uint8_t *packet, int length){
     cout << endl;
 }
 
+
+void parse::get_start_time(clock_t start){
+    this->start_time=start;
+}
+void parse::get_end_time(clock_t end){
+    this->end_time=end;
+}
+
+clock_t parse::using_start_time(){
+    return this->start_time;
+}
+clock_t parse::using_end_time(){
+    return this->end_time;
+}
+

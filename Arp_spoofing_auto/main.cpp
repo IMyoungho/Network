@@ -12,6 +12,8 @@ int main(int argc, char* argv[])
     int button=0;
     map<keydata,valuedata>data_map;
     button_logic(button,data_map,&ps);
+
+    cout << "main bye" << endl;
     return 0;
 }
 

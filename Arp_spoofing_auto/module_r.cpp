@@ -1,27 +1,58 @@
 #include "module_r.h"
+//void timer(parse *ps, time_t start_time, time_t end_time,atomic<bool>&run){
+//    cout << "timer start" <<endl;
+//    time(&start_time);
+//    ps->get_start_time(start_time);
+//    cout << "start2 = " << ps->using_start_time() << endl;
+//    sleep(2);
+//    time(&end_time);
+//    ps->get_end_time(end_time);
+//    cout << "end2 = " << ps->using_end_time() << endl;
 
-void receive_arp_packet(parse *ps){
+//    if(end_time - start_time ==2)
+//        run=false;
+//}
+
+
+void receive_arp_packet(parse *ps, map<keydata,valuedata>data_map){
+    map<keydata,valuedata>::iterator data_it;
+    keydata k;
+    valuedata v;
     int ret;
     const uint8_t *packet;
     struct pcap_pkthdr *pkthdr;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *pcd = pcap_open_live(ps->using_interface(), BUFSIZ, 1 , 1, errbuf);
-    while(true){
+
+//    time_t start, end;  //temp
+//    atomic <bool>run{true};  //temp
+//    thread tic_toc(timer,ps, start,end,ref(run));  //temp
+//    tic_toc.join();  //temp
+
+    while(true){  //insert stop function !!
         ret=pcap_next_ex(pcd, &pkthdr, &packet);
         switch (ret)
         {
             case 1:
             {
-                //cout << "Packet is comming" << endl;
                 struct ether_header *ep= (struct ether_header*)packet;
                 packet+=sizeof(ether_header);
                 if(ep->ether_type==ntohs(ETHERTYPE_ARP))
                 {
                     struct arp_header *ap = (struct arp_header*)packet;
-                    if(ap->dst_ip==ps->using_attacker_ip())
+                    if(ap->dst_ip==ps->using_attacker_ip() && ap->src_ip!=ps->using_attacker_ip())
                     {
-                        cout << "ARP packet is comssming" << endl;
-                        ps->show_packet((uint8_t*)packet,42);
+                        memcpy(k.mac,ap->src_mac,6);
+                        v.ip=ap->src_ip;
+                        //cout << "ARP packet is coming" << endl;
+                        //ps->show_packet((uint8_t*)packet,42);
+                        if((data_it = data_map.find(k)) != data_map.end()){
+                          //exist data
+                        }
+                        else{ //new data map insert
+                            data_map.insert(pair<keydata, valuedata>(k,v));
+                            cout << " [+] R E G I S T R A T I O N" << endl;
+                        }
                     }
                 }
             }
@@ -43,6 +74,7 @@ void receive_arp_packet(parse *ps){
             break;
         }
     }
+    cout << "receive finsih" << endl;
 }
 
 

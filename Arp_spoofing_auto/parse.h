@@ -15,6 +15,8 @@ private:
     uint8_t attacker_mac[6];
     uint32_t attacker_ip;
     uint8_t broadcast[6];
+    time_t start_time;  //temp
+    time_t end_time;  //temp
 public:
     parse(int argc, char* argv[]);
     void check_argc(int argc);
@@ -27,6 +29,11 @@ public:
     uint32_t using_attacker_ip();
     uint8_t *using_broadcast();
     void show_packet(uint8_t *packet, int length);
+
+    void get_start_time(clock_t start);  //temp
+    void get_end_time(clock_t end);  //temp
+    clock_t using_start_time();  //temp
+    clock_t using_end_time();  //temp
 };
 
 #endif // PARSE_H
