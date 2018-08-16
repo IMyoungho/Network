@@ -1,8 +1,8 @@
 #include "parse.h"
 
 parse::parse(int argc, char* argv[]){
-    check_argc(argc);
     this->interface=argv[1];
+    this->check_argc(argc);
     memset(this->broadcast,0xff,6);
 }
 
@@ -30,9 +30,6 @@ void parse::get_attacker_mac(uint8_t mac[6]){
 }
 void parse::get_attacker_ip(char ip[16]){
     inet_pton(AF_INET, ip, &this->attacker_ip);
-}
-void parse::get_pcap_handle(pcap_t *handle){
-    this->pcd=handle;
 }
 uint8_t *parse::using_attacker_mac(){
     return this->attacker_mac;
@@ -81,6 +78,4 @@ void parse::show_packet(uint8_t *packet, int length){
     }
     cout << endl;
 }
-pcap_t* parse::using_pcap_handle(){
-    return this->pcd;
-}
+

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <atomic>
+#include <thread>
 #include "keyboard_event.h"
 #include "setting_map.h"
 #include "module_r.h"

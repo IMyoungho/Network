@@ -9,5 +9,6 @@
 
 using namespace std;
 
+void receive_arp_packet(parse *ps);
 void make_arp_packet(parse *ps);
 #endif // MODULE_R_H

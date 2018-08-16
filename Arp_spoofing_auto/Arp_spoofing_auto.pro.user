@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.7.0, 2018-08-16T02:26:01. -->
+<!-- Written by QtCreator 4.7.0, 2018-08-16T09:06:42. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -309,7 +309,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Arp_spoofing_auto2</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/root/Network/Arp_spoofing_auto/Arp_spoofing_auto.pro</value>
     <value type="bool" key="QmakeProjectManager.QmakeRunConfiguration.UseLibrarySearchPath">true</value>
-    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">eth0</value>
+    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">wlan0 </value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.ProFile">Arp_spoofing_auto.pro</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.UserWorkingDirectory"></value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.UserWorkingDirectory.default">/root/build-Arp_spoofing_auto-Desktop_Qt_5_10_1_GCC_64bit-Debug</value>
