@@ -43,8 +43,8 @@ void parse::parse_data_in_linux(){ //공격자, 즉 나의 mac주소 파씽
     //-----------------------------get my(attacker) ip!!----------------------------- // 공격자 즉 나의 ip 파씽
     FILE *i;
     i=popen("ip addr | grep 'inet' | grep brd | awk '{printf $2}' | awk -F/ ' {printf $1}'","r");
-    char host_ip[15];
-    fgets(host_ip,15,i);
+    char host_ip[16];
+    fgets(host_ip,16,i);
     this->get_my_ip(host_ip);
 }
 void parse::parse_client_mac(uint8_t mac[6]){
