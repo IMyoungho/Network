@@ -23,7 +23,7 @@ void cal_checksum::get_icmphdr(struct icmphdr *icp){
     icp->check=0;
     this->icph=icp;
 }
-void cal_checksum::get_pesudo(int type){
+void cal_checksum::get_pesudo(int type){ //pesudo 파씽 및 pesudo 생성
     this->pseu.src_ip = this->iph->saddr;
     this->pseu.dst_ip = this->iph->daddr;
     this->pseu.reserved = 0;
@@ -33,14 +33,14 @@ void cal_checksum::get_pesudo(int type){
         case udpchecksum:
             this->pseu.length = this->udph->len;
         break;
-        case tcpchecksum:
+        case tcpchecksum: //필요없음
             this->pseu.length = htons(ntohs(this->iph->tot_len)-this->iph->ihl*4);
         break;
         default:
             break;
     }
 }
-int cal_checksum::calculation(uint8_t *temp, int length, bool change){
+int cal_checksum::calculation(uint8_t *temp, int length, bool change){ //checksum 계산
     int checksum{0};
     /*
     for(int i=0; i<length; i++)
@@ -50,9 +50,9 @@ int cal_checksum::calculation(uint8_t *temp, int length, bool change){
         printf("%02x ",temp[i]);
     }
     */
-    for(int i=0; i<length; i+=2)
+    for(int i=0; i<length; i+=2) //2바이트씩 계산해야함
     {
-        if(i==length-1 && change == true)
+        if(i==length-1 && change == true)// 홀 수일 경우 마지막 바이트 처리
         {
             int last_arr=temp[length-1] << 8;
             checksum+=last_arr;
@@ -69,7 +69,7 @@ int cal_checksum::calculation(uint8_t *temp, int length, bool change){
     checksum+=carry_count;
     return ~checksum;
 }
-uint16_t cal_checksum::checksum(int select_checksum){
+uint16_t cal_checksum::checksum(int select_checksum){ //checksum ip인지 udp인지 선택 함수
     uint8_t *temp;
     uint16_t checksum;
     int length{0};
