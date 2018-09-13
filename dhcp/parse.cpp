@@ -8,7 +8,7 @@ parse::parse(int argc, char*argv[]){
     check_argc(argc,argv);
 }
 void parse::check_argc(int argc, char *argv[]){
-    if(argc!=4){
+    if(argc!=4){ //인자 갯수 판별, 인자의 수가 4개가 안 될 경우 사용법 출력 후 종료
         cout << "<usage> : <Interface> <Send DHCP SERVER IP> <Send DHCP SERVER MAC>" << endl;
         exit(1);
     }
@@ -24,7 +24,7 @@ void parse::get_my_mac(uint8_t mac[6]){
 void parse::get_my_ip(char ip[16]){
     inet_pton(AF_INET, ip, &this->attacker_ip);
 }
-void parse::parse_data_in_linux(){
+void parse::parse_data_in_linux(){ //공격자, 즉 나의 mac주소 파씽
     //-----------------------------get my(attacker) mac!!-----------------------------
     char host_mac[18];//mymac
     FILE *m;
@@ -40,7 +40,7 @@ void parse::parse_data_in_linux(){
     char_to_binary(host_mac,mac);
     this->get_my_mac(mac);
 
-    //-----------------------------get my(attacker) ip!!-----------------------------
+    //-----------------------------get my(attacker) ip!!----------------------------- // 공격자 즉 나의 ip 파씽
     FILE *i;
     i=popen("ip addr | grep 'inet' | grep brd | awk '{printf $2}' | awk -F/ ' {printf $1}'","r");
     char host_ip[15];
@@ -97,7 +97,7 @@ int parse::using_dhcp_length(){
 uint8_t *parse::using_dhcp_packet(){
     return this->dhcp_packet;
 }
-void parse::show_dhcp_packet(){
+void parse::show_dhcp_packet(){ // 패킷 출력 함수
     for(int i=0; i<this->dhcp_length; i++){
         if(i%16==0)
             cout << endl;
@@ -105,7 +105,7 @@ void parse::show_dhcp_packet(){
     }
     cout << endl;
 }
-void parse::make_arp_packet(){
+void parse::make_arp_packet(){ //arp 사용안함
     struct using_arp_type_data utd;
     this->arp_length= sizeof(struct ether_header) + sizeof(struct arp_header);
     this->arp_packet = new uint8_t[this->arp_length];
@@ -130,10 +130,10 @@ void parse::make_arp_packet(){
     }
     */
 }
-uint8_t *parse::using_arp_packet(){
+uint8_t *parse::using_arp_packet(){ //사용안했음
     return this->arp_packet;
 }
-int parse::using_arp_packet_length(){
+int parse::using_arp_packet_length(){ //사용안했음
     return this->arp_length;
 }
 void parse::parse_transaction_id(uint16_t id){
