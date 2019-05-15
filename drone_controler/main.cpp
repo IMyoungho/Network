@@ -6,6 +6,7 @@
 
 using namespace std;
 //vm이기때문에 eth0로 쏴야함 그럼 host에서 wifi3 즉 무선랜카드로 패킷이 나감
+//host로 drone에 연결하고 ip 확인 후 my ip인자값으로 준다. guest는 유선으로 연결
 //mac주소는 vm을 거치면서 자동으로 변환됨으로 신경은 일단쓰지말자 하지만 쏘는 ip는 정확히 맞춰줘야함
 int main(int argc, char *argv[])
 {
@@ -47,16 +48,11 @@ int main(int argc, char *argv[])
                 pcap_sendpacket(pcd,ps.down_excute,sizeof(ps.down_excute));
             }
             break;
-            case 0x41://error
+            case 0x41:
             {
-                cout << "GO" << endl;
-                uint8_t b[52]={0x60, 0x60, 0x1f, 0xaa, 0x4b, 0x4d, 0x9c, 0xef, 0xd5, 0xfe, 0xc1, 0x51, 0x08, 0x00, 0x45, 0x00
-                               , 0x00, 0x26, 0x07, 0xde, 0x40, 0x00, 0x80, 0x11, 0x5d, 0x94, 0xc0, 0xa8, 0x0a, 0x03, 0xc0, 0xa8
-                               , 0x0a, 0x01, 0xff, 0x5c, 0x22, 0xb9, 0x00, 0x12, 0x76, 0xb5, 0x66, 0x6f, 0x72, 0x77, 0x61, 0x72
-                               , 0x64, 0x20, 0x33, 0x30};
-                 pcap_sendpacket(pcd,b,52); //temp
-                 //pcap_sendpacket(pcd,ps.go,sizeof(ps.go));//<-why..error
-                 pcap_sendpacket(pcd,ps.go_excute,sizeof(ps.go_excute));
+                cout << "Forward" << endl;
+                 pcap_sendpacket(pcd,ps.forward,sizeof(ps.forward));
+                 pcap_sendpacket(pcd,ps.forward_excute,sizeof(ps.forward_excute));
             }
             break;
             case 0x42:

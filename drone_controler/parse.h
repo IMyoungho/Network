@@ -22,7 +22,7 @@
 
 #define upexcute 11
 #define downexcute 12
-#define goexcute 13
+#define forwardexcute 13
 #define backexcute 14
 #define leftexcute 15
 #define rightexcute 16
@@ -41,14 +41,14 @@ public:
     uint8_t landing[46];
     uint8_t up[47];
     uint8_t down[49];
-    uint8_t go[52];
+    uint8_t forward[52];
     uint8_t back[49];
     uint8_t left[49];
     uint8_t right[50];
 
     uint8_t up_excute[54];
     uint8_t down_excute[55];
-    uint8_t go_excute[54];
+    uint8_t forward_excute[54];
     uint8_t back_excute[55];
     uint8_t left_excute[55];
     uint8_t right_excute[54];
@@ -63,7 +63,7 @@ public:
     void make_landing(ether_header*ep, iphdr *ip, udphdr *up, cal_checksum *cc);
     void make_up(ether_header*ep, iphdr *ip, udphdr *up, cal_checksum *cc);
     void make_down(ether_header*ep, iphdr *ip, udphdr *up, cal_checksum *cc);
-    void make_go(ether_header*ep, iphdr *ip, udphdr *up, cal_checksum *cc);
+    void make_forward(ether_header*ep, iphdr *ip, udphdr *up, cal_checksum *cc);
     void make_back(ether_header*ep, iphdr *ip, udphdr *up, cal_checksum *cc);
     void make_left(ether_header*ep, iphdr *ip, udphdr *up, cal_checksum *cc);
     void make_right(ether_header *ep, iphdr *ip, udphdr *up, cal_checksum *cc);

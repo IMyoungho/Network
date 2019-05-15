@@ -83,7 +83,7 @@ uint16_t cal_checksum::checksum(int select_checksum){
 }
 uint16_t cal_checksum::checksum(int select_checksum, uint8_t *data){
     uint8_t *temp;
-    uint16_t checksum;
+    uint16_t checksum = 0;
     int length{0};
     switch (select_checksum) {
         case udpchecksum:
@@ -93,8 +93,7 @@ uint16_t cal_checksum::checksum(int select_checksum, uint8_t *data){
             memcpy(temp,(uint8_t*)&this->pseu,sizeof(struct pesudo));
             memcpy(temp+sizeof(struct pesudo),(uint8_t*)this->udph, sizeof(struct udphdr));
             memcpy(temp+sizeof(struct pesudo)+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
-            checksum = calculation(temp,length,true);
-
+            checksum = calculation((uint8_t*)temp,length,true);
         }
         break;
         default:

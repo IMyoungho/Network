@@ -6,7 +6,7 @@ parse::parse(int argc, char *argv[]){
 void parse::check_argc(int argc, char *argv[]){
     if(argc!= 5){
         cout << "***** 인자값이 잘못되었거나 존재하지 않습니다 *****\n";
-        cout << "    >> 사용법 : <dev>\n";
+        cout << "    >> 사용법 : <dev> <drone_ip> <drone_mac> <my_ip>\n";
         exit(1);
     }
     this->interface=argv[1];
@@ -46,7 +46,7 @@ void parse::make_common_packet(cal_checksum *cc){
     make_landing(ep,ip,up,cc);
     make_up(ep,ip,up,cc);
     make_down(ep,ip,up,cc);
-    make_go(ep,ip,up,cc);
+    make_forward(ep,ip,up,cc);
     make_back(ep,ip,up,cc);
     make_left(ep,ip,up,cc);
     make_right(ep,ip,up,cc);
@@ -56,7 +56,7 @@ void parse::make_excute(struct ether_header*ep, struct iphdr *ip, struct udphdr*
     switch (type) {
         case upexcute:
         case rightexcute:
-        case goexcute:
+        case forwardexcute:
         {
             ip->tot_len=ntohs(0x0028);
             cc->get_iphdr(ip);
@@ -103,14 +103,14 @@ void parse::make_excute(struct ether_header*ep, struct iphdr *ip, struct udphdr*
             memcpy(this->down_excute+sizeof(ether_header)+ip->ihl*4+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
         }
         break;
-        case goexcute:
+        case forwardexcute:
         {
-            uint8_t data[12]={0x67,0x6f,0x20,0x30,0x20,0x33,0x30,0x20,0x30,0x20,0x32,0x35};
+            uint8_t data[13]={0x67,0x6f,0x20,0x30,0x20,0x2d,0x33,0x30,0x20,0x30,0x20,0x32,0x35};
             up->check=ntohs(cc->checksum(udpchecksum,data));
-            memcpy(this->go_excute,(uint8_t*)ep,sizeof(ether_header));
-            memcpy(this->go_excute+sizeof(ether_header),(uint8_t*)ip,ip->ihl*4);
-            memcpy(this->go_excute+sizeof(ether_header)+ip->ihl*4,(uint8_t*)up,sizeof(udphdr));
-            memcpy(this->go_excute+sizeof(ether_header)+ip->ihl*4+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
+            memcpy(this->forward_excute,(uint8_t*)ep,sizeof(ether_header));
+            memcpy(this->forward_excute+sizeof(ether_header),(uint8_t*)ip,ip->ihl*4);
+            memcpy(this->forward_excute+sizeof(ether_header)+ip->ihl*4,(uint8_t*)up,sizeof(udphdr));
+            memcpy(this->forward_excute+sizeof(ether_header)+ip->ihl*4+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
         }
         break;
         case backexcute:
@@ -223,8 +223,8 @@ void parse::make_down(struct ether_header *ep, struct iphdr *ip, struct udphdr*u
     memcpy(this->down+sizeof(ether_header)+ip->ihl*4,(uint8_t*)up,sizeof(udphdr));
     memcpy(this->down+sizeof(ether_header)+ip->ihl*4+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
 }
-void parse::make_go(struct ether_header *ep, struct iphdr *ip, struct udphdr*up, cal_checksum *cc){
-    ip->tot_len=ntohs(0x0026);
+void parse::make_forward(struct ether_header *ep, struct iphdr *ip, struct udphdr*up, cal_checksum *cc){
+    ip->tot_len=ntohs(0x0023);
     cc->get_iphdr(ip);
     ip->check=ntohs(cc->checksum(ipchecksum));
     up->len=ntohs(0x0012);
@@ -233,10 +233,10 @@ void parse::make_go(struct ether_header *ep, struct iphdr *ip, struct udphdr*up,
     uint8_t data[10]={0x66,0x6f,0x72,0x77,0x61,0x72,0x64,0x20,0x33,0x30};
     up->check=ntohs(cc->checksum(udpchecksum,data));
 
-    memcpy(this->go,(uint8_t*)ep,sizeof(ether_header));
-    memcpy(this->go+sizeof(ether_header),(uint8_t*)ip,ip->ihl*4);
-    memcpy(this->go+sizeof(ether_header)+ip->ihl*4,(uint8_t*)up,sizeof(udphdr));
-    memcpy(this->go+sizeof(ether_header)+ip->ihl*4+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
+    memcpy(this->forward,(uint8_t*)ep,sizeof(ether_header));
+    memcpy(this->forward+sizeof(ether_header),(uint8_t*)ip,ip->ihl*4);
+    memcpy(this->forward+sizeof(ether_header)+ip->ihl*4,(uint8_t*)up,sizeof(udphdr));
+    memcpy(this->forward+sizeof(ether_header)+ip->ihl*4+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
 }
 void parse::make_back(struct ether_header *ep, struct iphdr *ip, struct udphdr*up, cal_checksum *cc){
     ip->tot_len=ntohs(0x0023);
