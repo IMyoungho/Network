@@ -24,6 +24,7 @@ void cal_checksum::get_icmphdr(struct icmphdr *icp){
     this->icph=icp;
 }
 void cal_checksum::get_pesudo(int type){
+    memset(&this->pseu,0,sizeof(pseu));
     this->pseu.src_ip = this->iph->saddr;
     this->pseu.dst_ip = this->iph->daddr;
     this->pseu.reserved = 0;
@@ -41,7 +42,7 @@ void cal_checksum::get_pesudo(int type){
     }
 }
 int cal_checksum::calculation(uint8_t *temp, int length, bool change){
-    int checksum{0};
+    int checksum=0;
 
     for(int i=0; i<length; i+=2)
     {
@@ -53,7 +54,7 @@ int cal_checksum::calculation(uint8_t *temp, int length, bool change){
         }
         checksum += (temp[i] << 8) + temp[i+1];
     }
-    int carry_count{0};
+    int carry_count=0;
     while(checksum>=OUT_OF_RANGE)
     {
         checksum-=OUT_OF_RANGE;
@@ -64,7 +65,7 @@ int cal_checksum::calculation(uint8_t *temp, int length, bool change){
 }
 uint16_t cal_checksum::checksum(int select_checksum){
     uint8_t *temp;
-    uint16_t checksum;
+    uint16_t checksum = 0;
     int length{0};
     switch (select_checksum) {
         case ipchecksum:
@@ -84,7 +85,7 @@ uint16_t cal_checksum::checksum(int select_checksum){
 uint16_t cal_checksum::checksum(int select_checksum, uint8_t *data){
     uint8_t *temp;
     uint16_t checksum = 0;
-    int length{0};
+    int length=0;
     switch (select_checksum) {
         case udpchecksum:
         {

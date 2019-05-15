@@ -224,7 +224,7 @@ void parse::make_down(struct ether_header *ep, struct iphdr *ip, struct udphdr*u
     memcpy(this->down+sizeof(ether_header)+ip->ihl*4+sizeof(udphdr),data,sizeof(data)/sizeof(uint8_t));
 }
 void parse::make_forward(struct ether_header *ep, struct iphdr *ip, struct udphdr*up, cal_checksum *cc){
-    ip->tot_len=ntohs(0x0023);
+    ip->tot_len=ntohs(0x0026);
     cc->get_iphdr(ip);
     ip->check=ntohs(cc->checksum(ipchecksum));
     up->len=ntohs(0x0012);

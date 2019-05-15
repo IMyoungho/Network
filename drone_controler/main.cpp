@@ -22,13 +22,13 @@ int main(int argc, char *argv[])
         switch (num) {
             case 0x31://1
             {
-                cout << "Take Off" << endl;
+                cout << "TAKE OFF" << endl;
                 pcap_sendpacket(pcd,ps.takeoff,sizeof(ps.takeoff));
             }
             break;
             case 0x32://2
             {
-                cout << "Landing" << endl;
+                cout << "LANDING" << endl;
                 pcap_sendpacket(pcd,ps.landing,sizeof(ps.landing));
             }
             break;
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
             {
                 cout << "UP" << endl;
                 pcap_sendpacket(pcd,ps.up,sizeof(ps.up));
-                pcap_sendpacket(pcd,ps.up_excute,sizeof(ps.up_excute));
+                //pcap_sendpacket(pcd,ps.up_excute,sizeof(ps.up_excute));
             }
             break;
             case 0x57://W
@@ -45,35 +45,40 @@ int main(int argc, char *argv[])
             {
                 cout << "DOWN" << endl;
                 pcap_sendpacket(pcd,ps.down,sizeof(ps.down));
-                pcap_sendpacket(pcd,ps.down_excute,sizeof(ps.down_excute));
+                //pcap_sendpacket(pcd,ps.down_excute,sizeof(ps.down_excute));
             }
             break;
             case 0x41:
             {
-                cout << "Forward" << endl;
-                 pcap_sendpacket(pcd,ps.forward,sizeof(ps.forward));
-                 pcap_sendpacket(pcd,ps.forward_excute,sizeof(ps.forward_excute));
+                cout << "FORWARD" << endl;
+                uint8_t b[52]={0x60, 0x60, 0x1f, 0xaa, 0x4b, 0x4d, 0x9c, 0xef, 0xd5, 0xfe, 0xc1, 0x51, 0x08, 0x00, 0x45, 0x00
+                               , 0x00, 0x26, 0x07, 0xde, 0x40, 0x00, 0x80, 0x11, 0x5d, 0x94, 0xc0, 0xa8, 0x0a, 0x03, 0xc0, 0xa8
+                               , 0x0a, 0x01, 0xff, 0x5c, 0x22, 0xb9, 0x00, 0x12, 0x76, 0xb5, 0x66, 0x6f, 0x72, 0x77, 0x61, 0x72
+                               , 0x64, 0x20, 0x33, 0x30};
+                 pcap_sendpacket(pcd,b,52); //temp
+//                pcap_sendpacket(pcd,ps.forward,sizeof(ps.forward)); // error...
+                //pcap_sendpacket(pcd,ps.forward_excute,sizeof(ps.forward_excute));
             }
             break;
             case 0x42:
             {
                 cout << "BACK" << endl;
                 pcap_sendpacket(pcd,ps.back,sizeof(ps.back));
-                pcap_sendpacket(pcd,ps.back_excute,sizeof(ps.back_excute));
+                //pcap_sendpacket(pcd,ps.back_excute,sizeof(ps.back_excute));
             }
             break;
             case 0x43:
             {
                 cout << "RIGHT" << endl;
                 pcap_sendpacket(pcd,ps.right,sizeof(ps.right));
-                pcap_sendpacket(pcd,ps.right_excute,sizeof(ps.right_excute));
+                //pcap_sendpacket(pcd,ps.right_excute,sizeof(ps.right_excute));
             }
             break;
             case 0x44:
             {
                 cout << "LEFT" << endl;
                 pcap_sendpacket(pcd,ps.left,sizeof(ps.left));
-                pcap_sendpacket(pcd,ps.left_excute,sizeof(ps.left_excute));
+                //pcap_sendpacket(pcd,ps.left_excute,sizeof(ps.left_excute));
             }
             break;
         }
