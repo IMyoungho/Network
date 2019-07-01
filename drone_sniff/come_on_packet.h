@@ -1,6 +1,8 @@
 #ifndef COME_ON_PACKET_H
 #define COME_ON_PACKET_H
 #include <stdio.h>
+
+#include <iostream>
 #include <pcap.h>
 #include <netinet/ether.h>
 #include <netinet/ip.h>
@@ -8,7 +10,9 @@
 #include <netinet/tcp.h>
 #include <unistd.h>
 #include <string.h>
+#include <vector>
 #include "parse.h"
 
+using namespace std;
 void come_on_packet(parse *ps);
 #endif // COME_ON_PACKET_H
