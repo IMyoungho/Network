@@ -2,14 +2,15 @@
 #include "come_on_packet.h"
 
 //할 일 :
-// 1. 길이값 안맞는 부분 고치기
-// 2. Sequence 넘버를 맞춰주자!! 그리고 재전송 패킷은 먼저 나올수도 있다. seq는 같고 frag는 점점더 커저야한다.(같으면안됨)
+// 1. 패킷이 마지막에 잘림 자꾸 몇 덩어리가 write 되지 않았음..
+// 2. 무선랜이 느려지는 현상 -> 로직상 문제인가 아니면 인터페이스 문제인가.. ->> thread!!
+// 3. 서버로 전송하기로 만들자. 0x00들이 발견되었음.. please.mp4 !!! 07.03. 새벽 04:01
+// 4. 그게안되면 틴즈사용 or ARP 스푸핑
 
 //해 결 :
 // 1. video_pcap => number 94 udp packet 패킷이 짤려나왓음 -> 그 이후도 더이상 저장이 안되어잇음 -> 이전패킷과 동일할 경우 무시해야함
 // 2. 똑같은 패킷이 여러개 복사된다 그것만 해결하면 될듯 -> 인터페이스 문제같음
-// 3. 패킷이 짤리는 현상 Ex) musun.pcap
-
+// 3. Sequence number와 fragment number를 비교해줘서 중복값 문제를 해결함
 
 int offset=0; //저장된 분할 패킷만큼 건너뛰기 위한 offset
 bool start = false; //포트와 이이피 맥을 검증하여서 일치하면 true
@@ -24,31 +25,30 @@ void showme(uint8_t *packet, int len){
     printf("\n");
 }
 
+
 void come_on_packet(parse *ps)
 {
-//    int client_socket;
-//    struct sockaddr_in   server_addr;
-//    char buff[1458];
-//    client_socket  = socket( PF_INET, SOCK_STREAM, 0);
-//    if( -1 == client_socket)
-//    {
-//        printf( "socket 생성 실패\n");
-//        exit( 1);
-//    }
-//    memset( &server_addr, 0, sizeof( server_addr));
-//    server_addr.sin_family     = AF_INET;
-//    server_addr.sin_port       = htons(7979);
-//    server_addr.sin_addr.s_addr= inet_addr( "127.0.0.1");
+    int client_socket;
+    struct sockaddr_in   server_addr;
+    client_socket  = socket( PF_INET, SOCK_STREAM, 0);
+    if( -1 == client_socket)
+    {
+        printf( "socket 생성 실패\n");
+        exit( 1);
+    }
+    memset( &server_addr, 0, sizeof( server_addr));
+    server_addr.sin_family     = AF_INET;
+    server_addr.sin_port       = htons(7979);
+    server_addr.sin_addr.s_addr= inet_addr( "127.0.0.1");
 
-//    if( -1 == connect( client_socket, (struct sockaddr*)&server_addr, sizeof( server_addr) ) )
-//    {
-//        printf( "접속 실패\n");
-//        exit( 1);
-//    }     // +1: NULL까지 포함해서 전송
+    if( -1 == connect( client_socket, (struct sockaddr*)&server_addr, sizeof( server_addr) ) )
+    {
+        printf( "접속 실패\n");
+        exit( 1);
+    }     // +1: NULL까지 포함해서 전송
 
 
 //  ========================================================================================================================
-    FILE *fp = fopen("/root/Desktop/drone/pls.mp4", "w"); // file
     int ret;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *pcd;
@@ -57,7 +57,6 @@ void come_on_packet(parse *ps)
     pcd=pcap_open_live(ps->using_interface(),BUFSIZ,1,1,errbuf);
     uint8_t video[10000];// 임시 비디오 패킷 길이가 제각각이므로 측정이 불가함, 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
     int write_length=0;  // 패킷의 길이 측정 -> 보통 1460개의 길이지만 assemble 했을 때 길이가 각기다름
-    //uint8_t tmp_cmp[16]; // 2019.07.03
     uint8_t frag=0;
     uint16_t seq=0;
 
@@ -70,17 +69,12 @@ void come_on_packet(parse *ps)
             case 1:
             {
                 int packet_len = pkthdr->len;
-                uint8_t* check_packet;
-//                uint8_t* packet_tmp=(uint8_t*)packet;       // 2019.07.03
-//                if(memcmp(tmp_cmp,(uint8_t*)packet,16)==0)  // 2019.07.03
-//                    continue;
+                uint8_t* check_packet; //제일 처음오는 fragment 패킷의 data+8부터 reassembled 패킷의 ip header이므로 이를 이용해 미리 ip와 port를 검사하기 위한 포인터
 
                 struct radiotap_header *rp = (struct radiotap_header*)packet;
                 packet+=rp->header_length;
                 struct ieee80211_common *com = (struct ieee80211_common*)packet;
                 //재전송 플래그 체크 -> 재전송 플래그가 없이도 재전송되는 패킷이 존재했다 -> 중복되지 않아도 재전송패킷이 있음..
-//                if((com->retry==1 || com->retry==0) && memcmp(tmp_cmp,(uint8_t*)packet,16)==0)  // 2019.07.03
-//                    continue;                                                                   // 2019.07.03
                 if(com->frame_control_field!=0x88)
                     continue;
                 if(com->frame_control_field==0x88){
@@ -119,7 +113,6 @@ void come_on_packet(parse *ps)
                                         printf("fisrt offset = %d\n",offset);
                                         frag=qos->fragment_num;
                                         seq=qos->sequence_num;
-                                        //memcpy(tmp_cmp,packet_tmp,16);    // 2019.07.03
                                     }
                                 }
                             }
@@ -148,7 +141,10 @@ void come_on_packet(parse *ps)
 
                                     uint8_t *box = new uint8_t[write_length];//실제 전송되는 사용되는 패킷
                                     memcpy(box,video+38,(size_t)write_length);
-                                    fwrite(box,1,(size_t)write_length,fp);   //file -> size fix!! this is error logic
+
+                                    send(client_socket,(char*)box, (size_t)write_length,0); //client
+
+                                    cout <<"\n >> video packet collecting" << endl;
                                     showme(box,write_length);                //file
                                     //저장패킷 초기화 및 아이피 포트확인하는 start도 false로 초기화
                                     //그리고 다시 처음부터 패킷을 합침으로 offset도 초기화
@@ -159,19 +155,10 @@ void come_on_packet(parse *ps)
                                     seq=0;
                                     frag=0;
                                     delete [] box;
-    //                                memcpy(buff,video+38,1458);                      //client
-    //                                showme((uint8_t*)buff,sizeof(buff));             //client
-    //                                send(client_socket,(char*)buff, strlen(buff),0); //client
-    //                                memset(video,0,sizeof(video));                   //client
-    //                                memset(buff,0,sizeof(buff));                     //client
                             }
                         }
                     }
-    //                else
-    //                    continue; //logic bug1
                 }
-    //            else
-    //                continue; //logic bug2
             }
             break;
             case 0:
@@ -193,6 +180,5 @@ void come_on_packet(parse *ps)
             break;
         }
     }
-//    close( client_socket); //client
-    fclose(fp);//file
+    close(client_socket); //client
 }
