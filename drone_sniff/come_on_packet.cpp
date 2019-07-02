@@ -2,8 +2,8 @@
 #include "come_on_packet.h"
 
 //할 일 :
-// 1. 길이값 안맞는 부분과 재전송 플래그없이도 재전송되는 부분고치기!!
-
+// 1. 길이값 안맞는 부분 고치기
+// 2. Sequence 넘버를 맞춰주자!! 그리고 재전송 패킷은 먼저 나올수도 있다. seq는 같고 frag는 점점더 커저야한다.(같으면안됨)
 
 //해 결 :
 // 1. video_pcap => number 94 udp packet 패킷이 짤려나왓음 -> 그 이후도 더이상 저장이 안되어잇음 -> 이전패킷과 동일할 경우 무시해야함
@@ -55,8 +55,13 @@ void come_on_packet(parse *ps)
     const u_int8_t *packet;
     struct pcap_pkthdr *pkthdr;
     pcd=pcap_open_live(ps->using_interface(),BUFSIZ,1,1,errbuf);
-    uint8_t video[10000];// 임시 비디오 패킷 길이가 제각각이므로 측정이 불가함 // 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
+    uint8_t video[10000];// 임시 비디오 패킷 길이가 제각각이므로 측정이 불가함, 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
     int write_length=0;  // 패킷의 길이 측정 -> 보통 1460개의 길이지만 assemble 했을 때 길이가 각기다름
+    //uint8_t tmp_cmp[16]; // 2019.07.03
+    uint8_t frag=0;
+    uint16_t seq=0;
+
+
     while(true)
     {
         ret=pcap_next_ex(pcd, &pkthdr, &packet);
@@ -66,12 +71,16 @@ void come_on_packet(parse *ps)
             {
                 int packet_len = pkthdr->len;
                 uint8_t* check_packet;
+//                uint8_t* packet_tmp=(uint8_t*)packet;       // 2019.07.03
+//                if(memcmp(tmp_cmp,(uint8_t*)packet,16)==0)  // 2019.07.03
+//                    continue;
+
                 struct radiotap_header *rp = (struct radiotap_header*)packet;
                 packet+=rp->header_length;
                 struct ieee80211_common *com = (struct ieee80211_common*)packet;
-                //재전송 플래그 체크 -> 재전송 플래그가 없이도 재전송되는 패킷이 존재했다.
-                if(com->retry==1)
-                    continue;
+                //재전송 플래그 체크 -> 재전송 플래그가 없이도 재전송되는 패킷이 존재했다 -> 중복되지 않아도 재전송패킷이 있음..
+//                if((com->retry==1 || com->retry==0) && memcmp(tmp_cmp,(uint8_t*)packet,16)==0)  // 2019.07.03
+//                    continue;                                                                   // 2019.07.03
                 if(com->frame_control_field!=0x88)
                     continue;
                 if(com->frame_control_field==0x88){
@@ -84,11 +93,14 @@ void come_on_packet(parse *ps)
                                 memcmp(qos->sta, ps->using_controller_mac(),6)==0){
                             packet+=sizeof(ieee80211_qos_frame);
                             if(start==true){
-                                printf("second offset = %d\n",offset);
-                                memcpy(video+offset,packet,(size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
-                                offset += (size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame);
-                                write_length+=offset;
-                                printf("third offset = %d\n",offset);
+                                if(qos->fragment_num > frag && qos->sequence_num ==seq){
+                                    printf("second offset = %d\n",offset);
+                                    memcpy(video+offset,packet,(size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
+                                    offset += (size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame);
+                                    write_length+=offset;
+                                    printf("third offset = %d\n",offset);
+                                    frag=qos->fragment_num;
+                                }
                             }
                             else{
                                 // 아이피와 포트를 확인해서 필요한 데이터인지 분류함. 일치하면 패킷 데이터를 저장하고
@@ -105,6 +117,9 @@ void come_on_packet(parse *ps)
                                         offset += (size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame);
                                         write_length+=offset;
                                         printf("fisrt offset = %d\n",offset);
+                                        frag=qos->fragment_num;
+                                        seq=qos->sequence_num;
+                                        //memcpy(tmp_cmp,packet_tmp,16);    // 2019.07.03
                                     }
                                 }
                             }
@@ -116,36 +131,40 @@ void come_on_packet(parse *ps)
                         if(start!=true)
                             continue;
                         struct ieee80211_qos_frame *qos = (struct ieee80211_qos_frame*)packet;
-                        if(memcmp(qos->src,ps->using_drone_mac(),6)==0 &&
-                                memcmp(qos->bssid,ps->using_drone_mac(),6)==0 &&
-                                memcmp(qos->sta, ps->using_controller_mac(),6)==0){
-                            //다합친 패킷 파일에 쓰기
-                                packet+=sizeof(ieee80211_qos_frame);
-                                if(write_length<1458)
-                                    write_length+=(size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame)-38;//38 means header length
-                                else if(write_length>=1458 && write_length <=1560)
-                                    write_length-=102;
+                        if(qos->fragment_num > frag && qos->sequence_num == seq){
+                            if(memcmp(qos->src,ps->using_drone_mac(),6)==0 &&
+                                    memcmp(qos->bssid,ps->using_drone_mac(),6)==0 &&
+                                    memcmp(qos->sta, ps->using_controller_mac(),6)==0){
+                                //다합친 패킷 파일에 쓰기
+                                    packet+=sizeof(ieee80211_qos_frame);
+                                    if(write_length<1458)
+                                        write_length+=(size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame)-38;//38 means header length
+                                    else if(write_length>=1458 && write_length <=1560)
+                                        write_length-=102;
 
-                                printf("last offset = %d\n",offset);
-                                printf("write_length = %d",write_length);
-                                memcpy(video+offset,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
+                                    printf("last offset = %d\n",offset);
+                                    printf("write_length = %d",write_length);
+                                    memcpy(video+offset,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
 
-                                uint8_t *box = new uint8_t[write_length];//실제 전송되는 사용되는 패킷
-                                memcpy(box,video+38,(size_t)write_length);
-                                fwrite(box,1,(size_t)write_length,fp);   //file -> size fix!! this is error logic
-                                showme(box,write_length);                //file
-                                //저장패킷 초기화 및 아이피 포트확인하는 start도 false로 초기화
-                                //그리고 다시 처음부터 패킷을 합침으로 offset도 초기화
-                                memset(video,0,sizeof(video));
-                                offset = 0;
-                                start=false;
-                                write_length=0;
-                                delete [] box;
-//                                memcpy(buff,video+38,1458);                      //client
-//                                showme((uint8_t*)buff,sizeof(buff));             //client
-//                                send(client_socket,(char*)buff, strlen(buff),0); //client
-//                                memset(video,0,sizeof(video));                   //client
-//                                memset(buff,0,sizeof(buff));                     //client
+                                    uint8_t *box = new uint8_t[write_length];//실제 전송되는 사용되는 패킷
+                                    memcpy(box,video+38,(size_t)write_length);
+                                    fwrite(box,1,(size_t)write_length,fp);   //file -> size fix!! this is error logic
+                                    showme(box,write_length);                //file
+                                    //저장패킷 초기화 및 아이피 포트확인하는 start도 false로 초기화
+                                    //그리고 다시 처음부터 패킷을 합침으로 offset도 초기화
+                                    memset(video,0,sizeof(video));
+                                    offset = 0;
+                                    start=false;
+                                    write_length=0;
+                                    seq=0;
+                                    frag=0;
+                                    delete [] box;
+    //                                memcpy(buff,video+38,1458);                      //client
+    //                                showme((uint8_t*)buff,sizeof(buff));             //client
+    //                                send(client_socket,(char*)buff, strlen(buff),0); //client
+    //                                memset(video,0,sizeof(video));                   //client
+    //                                memset(buff,0,sizeof(buff));                     //client
+                            }
                         }
                     }
     //                else
