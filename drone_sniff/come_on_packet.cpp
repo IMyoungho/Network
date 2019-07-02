@@ -1,11 +1,16 @@
 #include "ieee80211.h"
 #include "come_on_packet.h"
 
-//문제점 : 로직버그가 있다. 똑같은 패킷이 여러개 복사된다 그것만 해결하면 될듯
-//로직은 해결한거 같은 마지막 패킷이 짤려나왓음
-//video_pcap => number 94 udp packet 패킷이 짤려나왓음 -> 그 이후도 더이상 저장이 안되어잇음 -> 이전패킷과 동일할 경우 무시해야함
+//할 일 :
+// 1. 길이값 안맞는 부분과 재전송 플래그없이도 재전송되는 부분고치기!!
 
-//uint8_t video[10000];//파일에 저장할 분할패킷을 다합친 패킷
+
+//해 결 :
+// 1. video_pcap => number 94 udp packet 패킷이 짤려나왓음 -> 그 이후도 더이상 저장이 안되어잇음 -> 이전패킷과 동일할 경우 무시해야함
+// 2. 똑같은 패킷이 여러개 복사된다 그것만 해결하면 될듯 -> 인터페이스 문제같음
+// 3. 패킷이 짤리는 현상 Ex) musun.pcap
+
+
 int offset=0; //저장된 분할 패킷만큼 건너뛰기 위한 offset
 bool start = false; //포트와 이이피 맥을 검증하여서 일치하면 true
 
@@ -50,8 +55,8 @@ void come_on_packet(parse *ps)
     const u_int8_t *packet;
     struct pcap_pkthdr *pkthdr;
     pcd=pcap_open_live(ps->using_interface(),BUFSIZ,1,1,errbuf);
-    uint8_t video[10000];                                // 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
-    int write_length=0;
+    uint8_t video[10000];// 임시 비디오 패킷 길이가 제각각이므로 측정이 불가함 // 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
+    int write_length=0;  // 패킷의 길이 측정 -> 보통 1460개의 길이지만 assemble 했을 때 길이가 각기다름
     while(true)
     {
         ret=pcap_next_ex(pcd, &pkthdr, &packet);
@@ -64,6 +69,9 @@ void come_on_packet(parse *ps)
                 struct radiotap_header *rp = (struct radiotap_header*)packet;
                 packet+=rp->header_length;
                 struct ieee80211_common *com = (struct ieee80211_common*)packet;
+                //재전송 플래그 체크 -> 재전송 플래그가 없이도 재전송되는 패킷이 존재했다.
+                if(com->retry==1)
+                    continue;
                 if(com->frame_control_field!=0x88)
                     continue;
                 if(com->frame_control_field==0x88){
@@ -83,8 +91,8 @@ void come_on_packet(parse *ps)
                                 printf("third offset = %d\n",offset);
                             }
                             else{
-                                // 아이피와 포트를 확인하고 내가 인자로넘겨준 정보들과 일치하면 패킷뭉탱이 저장하고
-                                // 그다음에 오는 패킷을 받기위해 start를 true로 바꿈
+                                // 아이피와 포트를 확인해서 필요한 데이터인지 분류함. 일치하면 패킷 데이터를 저장하고
+                                // 그 다음에 오는 패킷을 받기위해 start를 true로 바꿈
                                 check_packet=(uint8_t*)packet+8;
                                 struct iphdr *iph = (struct iphdr*)(check_packet);
                                 if(iph->protocol==0x11 && iph->daddr==0x020aa8c0 && iph->saddr==0x010aa8c0)
@@ -121,18 +129,18 @@ void come_on_packet(parse *ps)
                                 printf("last offset = %d\n",offset);
                                 printf("write_length = %d",write_length);
                                 memcpy(video+offset,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
-                                //uint8_t box[write_length]; //origin
-                                uint8_t *box = new uint8_t[write_length];//origin or delete
+
+                                uint8_t *box = new uint8_t[write_length];//실제 전송되는 사용되는 패킷
                                 memcpy(box,video+38,(size_t)write_length);
                                 fwrite(box,1,(size_t)write_length,fp);   //file -> size fix!! this is error logic
                                 showme(box,write_length);                //file
                                 //저장패킷 초기화 및 아이피 포트확인하는 start도 false로 초기화
                                 //그리고 다시 처음부터 패킷을 합침으로 offset도 초기화
-                                memset(video,0,1496);
+                                memset(video,0,sizeof(video));
                                 offset = 0;
                                 start=false;
                                 write_length=0;
-                                delete [] box; //origin or delete
+                                delete [] box;
 //                                memcpy(buff,video+38,1458);                      //client
 //                                showme((uint8_t*)buff,sizeof(buff));             //client
 //                                send(client_socket,(char*)buff, strlen(buff),0); //client
