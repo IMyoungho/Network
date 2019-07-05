@@ -1,6 +1,8 @@
 #include "ieee80211.h"
 #include "come_on_packet.h"
 
+//시도해보니 영상은 같음, 즉 패킷을 제대로 파일에 못쓰고있어서 나타나는 현상으로 보임
+
 //할 일 :
 // 1. 무선랜이 느려지는 현상 -> 로직상 문제인가 아니면 인터페이스 문제인가.. ->> thread!!
 //    tcpreplay로 진행할 때는 패킷이 잘 서버로 넘어가는데 왜 실제로 드론패킷을 잡으면 멈추는것일까..?
@@ -59,13 +61,13 @@ void come_on_packet(parse *ps)
     const u_int8_t *packet;
     struct pcap_pkthdr *pkthdr;
     pcd=pcap_open_live(ps->using_interface(),BUFSIZ,1,1,errbuf);
-    uint8_t video[10000];// 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
+    uint8_t video[2000];// 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
     int write_length=0;  // 패킷의 길이 측정 -> 보통 1460개의 길이지만 assemble 했을 때 길이가 각기다름 -> Ip header total length로 측정하기로함
     uint8_t frag=0;
     uint16_t seq=0;
     int offset=0; //저장된 분할 패킷만큼 건너뛰기 위한 offset
     bool start = false; //포트와 이이피 맥을 검증하여서 일치하면 true
-
+    int showcount=0; //temp
     while(true)
     {
         ret=pcap_next_ex(pcd, &pkthdr, &packet);
@@ -73,7 +75,7 @@ void come_on_packet(parse *ps)
         {
             case 1:
             {
-                int packet_len = pkthdr->len;
+                int packet_len = (int)pkthdr->len;
                 uint8_t* check_packet; //제일 처음오는 fragment 패킷의 data+8부터 reassembled 패킷의 ip header이므로 이를 이용해 미리 ip와 port를 검사하기 위한 포인터
 
                 struct radiotap_header *rp = (struct radiotap_header*)packet;
@@ -106,7 +108,7 @@ void come_on_packet(parse *ps)
                                 if(iph->protocol==0x11 && iph->daddr==0x020aa8c0 && iph->saddr==0x010aa8c0)
                                 {
                                     struct udphdr *udph = (struct udphdr*)(check_packet+iph->ihl*4);
-                                    if(udph->dest==ntohs(7797) && udph->source==ntohs(62512)){
+                                    if(udph->dest==ntohs(6038) && udph->source==ntohs(62512)){
                                         start=true;
                                         memcpy(video+offset,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
                                         offset += (size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame);
@@ -134,7 +136,9 @@ void come_on_packet(parse *ps)
                                     memcpy(video+offset,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
 
                                     //thread hi(send,client_socket,(char*)video+38, (size_t)write_length-2,0); //send to sever --> thread gogo 19.07.05
-                                    cout <<"\n >> video packet collecting" << endl;
+                                    //hi.join();
+                                    send(client_socket,(char*)video+38, (size_t)write_length-2,MSG_DONTROUTE);
+                                    cout <<"\n >> video packet collecting " << showcount++<< endl;
                                     showme(video+38,write_length-2);                //file
                                     //저장패킷 초기화 및 아이피 포트확인하는 start도 false로 초기화
                                     //그리고 다시 처음부터 패킷을 합침으로 offset도 초기화
