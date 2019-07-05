@@ -2,18 +2,22 @@
 #include "come_on_packet.h"
 
 //할 일 :
-// 1. 패킷이 마지막에 잘림 자꾸 몇 덩어리가 write 되지 않았음..
-// 2. 무선랜이 느려지는 현상 -> 로직상 문제인가 아니면 인터페이스 문제인가.. ->> thread!!
-// 3. 서버로 전송하기로 만들자. 0x00들이 발견되었음.. please.mp4 !!! 07.03. 새벽 04:01
-// 4. 그게안되면 틴즈사용 or ARP 스푸핑
+// 1. 무선랜이 느려지는 현상 -> 로직상 문제인가 아니면 인터페이스 문제인가.. ->> thread!!
+//    tcpreplay로 진행할 때는 패킷이 잘 서버로 넘어가는데 왜 실제로 드론패킷을 잡으면 멈추는것일까..?
+
+// 2. 무선랜 스니핑과 그냥 드론과의 통신 패킷을 잡아서 동영상 데이터영역을 비교해보자!
+//    시간이 된다면 드론을 조종하는 스마트폰의 화면에 다른영상을쏴서 바꿔보자
+
+// 3. 그게안되면 틴즈사용 or ARP 스푸핑
+
 
 //해 결 :
 // 1. video_pcap => number 94 udp packet 패킷이 짤려나왓음 -> 그 이후도 더이상 저장이 안되어잇음 -> 이전패킷과 동일할 경우 무시해야함
 // 2. 똑같은 패킷이 여러개 복사된다 그것만 해결하면 될듯 -> 인터페이스 문제같음
 // 3. Sequence number와 fragment number를 비교해줘서 중복값 문제를 해결함
+// 4. 서버로 전송하기로 만들자. 0x00들이 발견되었음.. 길이값 맞춰줘서 해결
 
-int offset=0; //저장된 분할 패킷만큼 건너뛰기 위한 offset
-bool start = false; //포트와 이이피 맥을 검증하여서 일치하면 true
+//offset, start 전역변수로 굳이 뺄 필요가 없다 -> 19.07.05 21:33
 
 void showme(uint8_t *packet, int len){
     for(int i=0; i<len; i++)
@@ -59,7 +63,8 @@ void come_on_packet(parse *ps)
     int write_length=0;  // 패킷의 길이 측정 -> 보통 1460개의 길이지만 assemble 했을 때 길이가 각기다름 -> Ip header total length로 측정하기로함
     uint8_t frag=0;
     uint16_t seq=0;
-
+    int offset=0; //저장된 분할 패킷만큼 건너뛰기 위한 offset
+    bool start = false; //포트와 이이피 맥을 검증하여서 일치하면 true
 
     while(true)
     {
@@ -128,7 +133,7 @@ void come_on_packet(parse *ps)
                                     printf("write_length = %d",write_length);
                                     memcpy(video+offset,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
 
-                                    send(client_socket,(char*)video+38, (size_t)write_length-2,0); //client
+                                    //thread hi(send,client_socket,(char*)video+38, (size_t)write_length-2,0); //send to sever --> thread gogo 19.07.05
                                     cout <<"\n >> video packet collecting" << endl;
                                     showme(video+38,write_length-2);                //file
                                     //저장패킷 초기화 및 아이피 포트확인하는 start도 false로 초기화
