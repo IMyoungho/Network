@@ -8,7 +8,7 @@
 #define NONPROMISCUOUS 0
 
 using namespace std;
-
+//mac, ip, port, interface 맞춰주기
 int main(int argc, char*argv[])
 {
     parse ps(argc,argv);

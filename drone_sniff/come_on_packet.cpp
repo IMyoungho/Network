@@ -6,12 +6,14 @@
 //할 일 :
 // 1. 무선랜이 느려지는 현상 -> 로직상 문제인가 아니면 인터페이스 문제인가.. ->> thread!!
 //    tcpreplay로 진행할 때는 패킷이 잘 서버로 넘어가는데 왜 실제로 드론패킷을 잡으면 멈추는것일까..?
+//    => 패킷이 유실되는 원인이 있음. Ex) seq = 1234 인데 잘가다가 마무리없이 seq=1235가 되는 경우가 발생..
 
 // 2. 무선랜 스니핑과 그냥 드론과의 통신 패킷을 잡아서 동영상 데이터영역을 비교해보자!
 //    시간이 된다면 드론을 조종하는 스마트폰의 화면에 다른영상을쏴서 바꿔보자
 
 // 3. 그게안되면 틴즈사용 or ARP 스푸핑
 
+//0나오는거 해결하기 그이유frag = 0 다음 1이아니라 2가나오고 그 뒤 제대로 seq마무리안된상태로 다음 seq가 와서
 
 //해 결 :
 // 1. video_pcap => number 94 udp packet 패킷이 짤려나왓음 -> 그 이후도 더이상 저장이 안되어잇음 -> 이전패킷과 동일할 경우 무시해야함
@@ -67,7 +69,9 @@ void come_on_packet(parse *ps)
     uint16_t seq=0;
     int offset=0; //저장된 분할 패킷만큼 건너뛰기 위한 offset
     bool start = false; //포트와 이이피 맥을 검증하여서 일치하면 true
-    int showcount=0; //temp
+    int showcount=1; //temp
+    int temp =1;
+
     while(true)
     {
         ret=pcap_next_ex(pcd, &pkthdr, &packet);
@@ -75,6 +79,8 @@ void come_on_packet(parse *ps)
         {
             case 1:
             {
+                cout <<"packet is comming " << temp++ <<endl;
+                //showme((uint8_t*)packet,pkthdr->len);
                 int packet_len = (int)pkthdr->len;
                 uint8_t* check_packet; //제일 처음오는 fragment 패킷의 data+8부터 reassembled 패킷의 ip header이므로 이를 이용해 미리 ip와 port를 검사하기 위한 포인터
 
@@ -89,12 +95,20 @@ void come_on_packet(parse *ps)
                     //분할패킷이 있는지 검증
                     if(com->more==1){
                         struct ieee80211_qos_frame *qos = (struct ieee80211_qos_frame*)packet;
+                        if(qos->sequence_num>seq || qos->fragment_num-frag>1){ //패킷이 유실되었을 때의 예외처리
+                            seq=0;
+                            frag=0;
+                            memset(video,0,sizeof(video));
+                            offset = 0;
+                            start=false;
+                            write_length=0;
+                        }
                         if(memcmp(qos->src,ps->using_drone_mac(),6)==0 &&
                                 memcmp(qos->bssid,ps->using_drone_mac(),6)==0 &&
                                 memcmp(qos->sta, ps->using_controller_mac(),6)==0){
                             packet+=sizeof(ieee80211_qos_frame);
                             if(start==true){
-                                if(qos->fragment_num > frag && qos->sequence_num ==seq){
+                                if(qos->fragment_num > frag && qos->sequence_num == seq){
                                     memcpy(video+offset,packet,(size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
                                     offset += (size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame);
                                     frag=qos->fragment_num;
@@ -134,9 +148,6 @@ void come_on_packet(parse *ps)
                                     packet+=sizeof(ieee80211_qos_frame);
                                     printf("write_length = %d",write_length);
                                     memcpy(video+offset,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
-
-                                    //thread hi(send,client_socket,(char*)video+38, (size_t)write_length-2,0); //send to sever --> thread gogo 19.07.05
-                                    //hi.join();
                                     send(client_socket,(char*)video+38, (size_t)write_length-2,MSG_DONTROUTE);
                                     cout <<"\n >> video packet collecting " << showcount++<< endl;
                                     showme(video+38,write_length-2);                //file
