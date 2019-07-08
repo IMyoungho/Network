@@ -13,7 +13,7 @@
 
 // 3. 그게안되면 틴즈사용 or ARP 스푸핑
 
-//0나오는거 해결하기 그이유frag = 0 다음 1이아니라 2가나오고 그 뒤 제대로 seq마무리안된상태로 다음 seq가 와서
+// 0나오는거 해결하기 그이유frag = 0 다음 1이아니라 2가나오고 그 뒤 제대로 seq마무리안된상태로 다음 seq가 와서
 
 //해 결 :
 // 1. video_pcap => number 94 udp packet 패킷이 짤려나왓음 -> 그 이후도 더이상 저장이 안되어잇음 -> 이전패킷과 동일할 경우 무시해야함
@@ -122,7 +122,7 @@ void come_on_packet(parse *ps)
                                 if(iph->protocol==0x11 && iph->daddr==0x020aa8c0 && iph->saddr==0x010aa8c0)
                                 {
                                     struct udphdr *udph = (struct udphdr*)(check_packet+iph->ihl*4);
-                                    if(udph->dest==ntohs(6038) && udph->source==ntohs(62512)){
+                                    if(udph->dest==ntohs(7797) && udph->source==ntohs(62512)){
                                         start=true;
                                         memcpy(video+offset,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame));
                                         offset += (size_t)packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame);
@@ -147,7 +147,7 @@ void come_on_packet(parse *ps)
                                 if(iph->protocol==0x11 && iph->daddr==0x020aa8c0 && iph->saddr==0x010aa8c0)
                                 {
                                     struct udphdr *udph = (struct udphdr*)(check_packet+iph->ihl*4);
-                                    if(udph->dest==ntohs(6038) && udph->source==ntohs(62512)){
+                                    if(udph->dest==ntohs(7797) && udph->source==ntohs(62512)){
                                         packet+= iph->ihl*4 + sizeof(udph)+2;//2 means packet sequence
                                         memcpy(video,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame)-(iph->ihl*4)-sizeof(udphdr)-10);//10 means LLC + packet seq
                                         showme((uint8_t*)packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame)-(iph->ihl*4)-sizeof(udphdr)-10);
