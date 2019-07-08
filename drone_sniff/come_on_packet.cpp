@@ -63,7 +63,7 @@ void come_on_packet(parse *ps)
     const u_int8_t *packet;
     struct pcap_pkthdr *pkthdr;
     pcd=pcap_open_live(ps->using_interface(),BUFSIZ,1,1,errbuf);
-    uint8_t video[2000];// 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
+    uint8_t video[10000];// 1460개로 안됬던 이유 -> 1460개가 넘는경우가 발생했다.
     int write_length=0;  // 패킷의 길이 측정 -> 보통 1460개의 길이지만 assemble 했을 때 길이가 각기다름 -> Ip header total length로 측정하기로함
     uint8_t frag=0;
     uint16_t seq=0;
@@ -137,9 +137,37 @@ void come_on_packet(parse *ps)
                     // 분할패킷이 더이상 없으면
                     else if(com->more==0){
                         //앞에서 진행한 검증확인 true
+                        if(packet_len<100){
+                            struct ieee80211_qos_frame *qos = (struct ieee80211_qos_frame*)packet;
+                            if(memcmp(qos->src,ps->using_drone_mac(),6)==0 &&
+                                    memcmp(qos->bssid,ps->using_drone_mac(),6)==0 &&
+                                    memcmp(qos->sta, ps->using_controller_mac(),6)==0){
+                                packet+=sizeof(ieee80211_qos_frame)+8; // 8 means LLC header
+                                struct iphdr *iph = (struct iphdr*)packet;
+                                if(iph->protocol==0x11 && iph->daddr==0x020aa8c0 && iph->saddr==0x010aa8c0)
+                                {
+                                    struct udphdr *udph = (struct udphdr*)(check_packet+iph->ihl*4);
+                                    if(udph->dest==ntohs(6038) && udph->source==ntohs(62512)){
+                                        packet+= iph->ihl*4 + sizeof(udph)+2;//2 means packet sequence
+                                        memcpy(video,packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame)-(iph->ihl*4)-sizeof(udphdr)-10);//10 means LLC + packet seq
+                                        showme((uint8_t*)packet,packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame)-(iph->ihl*4)-sizeof(udphdr)-10);
+                                        send(client_socket,(char*)video, packet_len-rp->header_length-sizeof(ieee80211_common)-sizeof(ieee80211_qos_frame)-(iph->ihl*4)-sizeof(udphdr)-10,MSG_DONTROUTE);
+                                        memset(video,0,sizeof(video));
+                                        offset = 0;
+                                        start=false;
+                                        write_length=0;
+                                        seq=0;
+                                        frag=0;
+                                    }
+                                }
+                            }
+                        }
                         if(start!=true)
                             continue;
                         struct ieee80211_qos_frame *qos = (struct ieee80211_qos_frame*)packet;
+                        if(qos->fragment_num-frag>1){
+                            continue;
+                        }
                         if(qos->fragment_num > frag && qos->sequence_num == seq){
                             if(memcmp(qos->src,ps->using_drone_mac(),6)==0 &&
                                     memcmp(qos->bssid,ps->using_drone_mac(),6)==0 &&
