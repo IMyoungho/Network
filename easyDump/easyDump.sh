@@ -1,8 +1,18 @@
-#!/bin/bash
+#!/bin/sh
 src_ip=$1
 dst_ip=$2
 port_=$3
 para_cnt=$#
+
+
+
+# 첫번째 인자를 인터페이스를 넣기
+# -f : find interface
+# => -f 옵션을 쓸때랑 다른 옵션쓸때랑 인자 다르게 만들어야함
+
+# -t : tcpdump 
+
+
 
 # check para count & para 
 if [ $# -le 1 ]; then
@@ -13,13 +23,16 @@ if [ $# -le 1 ]; then
   exit 0
 fi
 # check Net or Host 
+# 내가 입력한게 Host 인지 Network 대역인지 확인이 가능한 로직 필요
 
 
 # check Interface
+# 라우팅을 통해서 netstat -rn 으로 어떤 인터페이스를 통과하는지 확인할 수 있는 로직
+# 한쪽은 무조건 디폴트로 찾아야함
 
 
 # check Zone (Internal, Exteranl, DMZ)
-
+# 해당인터페이스가 어떤 존인지 fw show conf | grep Z
 
 # show ip & port
 echo "";
