@@ -10,9 +10,8 @@ para_cnt=$#
 # -f : find interface
 # => -f 옵션을 쓸때랑 다른 옵션쓸때랑 인자 다르게 만들어야함
 
-# -t : tcpdump 
-
-
+# in(inbound) : using input = 출발지 아이피 인터페이스
+# out(outbound) : using output = 목적지 아이피 인터페이스
 
 # check para count & para 
 if [ $# -le 1 ]; then
@@ -49,6 +48,13 @@ else
 fi
 echo "";
 
+echo "   [?] Choose inbound or outbound < Enter \"in\" or \"out\" >";
+read target
+
+#if문으로 in을 선택 시, 출발지 라우팅 인터페이스를, out선택시, 목적지라우팅 인터페이스를 나머지는 확인하라고하기
+
+echo "";
+echo "   [+] interface = $target";
 
 # Go Tcpdump !!
 dump="tcpdump -nni eth1 host $src_ip";
