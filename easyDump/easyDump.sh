@@ -4,6 +4,15 @@ dst_ip=$2
 port_=$3
 para_cnt=$#
 
+# 최상단에서 미리 인터페이스 정보 및 라우팅 빼오기
+# check Interface
+# 라우팅을 통해서 netstat -rn 으로 어떤 인터페이스를 통과하는지 확인할 수 있는 로직
+# 한쪽은 무조건 디폴트로 찾아야함
+
+
+# check Zone (Internal, Exteranl, DMZ)
+# 해당인터페이스가 어떤 존인지 fw show conf | grep Z
+
 #깨끗하게 지우고 시작
 clear
 
@@ -24,14 +33,6 @@ fi
 # 내가 입력한게 Host 인지 Network 대역인지 확인이 가능한 로직 필요
 
 
-# check Interface
-# 라우팅을 통해서 netstat -rn 으로 어떤 인터페이스를 통과하는지 확인할 수 있는 로직
-# 한쪽은 무조건 디폴트로 찾아야함
-
-
-# check Zone (Internal, Exteranl, DMZ)
-# 해당인터페이스가 어떤 존인지 fw show conf | grep Z
-
 # show ip & port
 echo ""
 echo "============================================";
@@ -48,7 +49,8 @@ else
   echo ""
   exit 0
 fi
-
+echo "  [+] Zone = < >"; #temp 추후에 아이피 옆에 같이 출력함
+echo "  [+] Interface = "; #temp 추후에 아이피 옆에 같이 출력함
 
 echo "";
 echo "--------------------------------------------";
