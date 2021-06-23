@@ -9,6 +9,20 @@ para_cnt=$#
 # 라우팅을 통해서 netstat -rn 으로 어떤 인터페이스를 통과하는지 확인할 수 있는 로직
 # 한쪽은 무조건 디폴트로 찾아야함
 
+# IP 정규표현식
+#^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)
+
+#netstat grep 결과가 변수에 제대로 저장이 안됨.. 파일쓰기로 해야하나?? 이건너무 비효율..
+echo "test";
+#parse= "netstat"
+#$parse
+echo "hi"
+#echo $parse | grep eth[0-9];
+echo "go"
+#$parse
+
+
+read a #temp 삭제예정
 
 # check Zone (Internal, Exteranl, DMZ)
 # 해당인터페이스가 어떤 존인지 fw show conf | grep Z
@@ -45,6 +59,7 @@ if [ $para_cnt -eq 2 ]; then
 elif [ $port_ -ge 1 ] && [ $port_ -le 65535 ]; then
   echo "  [+] Port = $port_";
 else
+  #clear
   echo "  [!] Check the port range < 1 - 65535 > :(";
   echo ""
   exit 0
@@ -69,6 +84,7 @@ if [ $target == "in" ]; then
 elif [ $target == "out" ]; then
   echo "  [OUT] Dump Outbound Traffic ";
 else
+  #clear
   echo "  [!] syntex error => Enter \"in\" or \"out\" ";
   echo ""
   exit 0
