@@ -21,7 +21,6 @@ echo "hi"
 echo "go"
 #$parse
 
-
 read a #temp 삭제예정
 
 # check Zone (Internal, Exteranl, DMZ)
